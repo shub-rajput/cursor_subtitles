@@ -1,8 +1,8 @@
 import Foundation
 
 struct CursorOffset: Codable, Sendable {
-    var x: CGFloat = 20
-    var y: CGFloat = 15
+    var x: CGFloat = 8
+    var y: CGFloat = 8
 }
 
 struct StyleConfig: Codable, Sendable {
