@@ -1,21 +1,30 @@
 import Foundation
 
 struct CursorOffset: Codable, Sendable {
-    var x: CGFloat = 8
-    var y: CGFloat = 8
+    var x: CGFloat = 12
+    var y: CGFloat = 12
 }
 
 struct StyleConfig: Codable, Sendable {
-    var backgroundColor: String = "#2DA44E"
+    var backgroundColor: String = "#1F6BE8"
     var textColor: String = "#FFFFFF"
     var placeholderText: String = "Say something"
-    var fontSize: CGFloat = 15
+    var fontSize: CGFloat = 14
     var fontFamily: String = "system"
     var cornerRadius: CGFloat = 20
+    var pointerCorner: Bool = true
     var paddingH: CGFloat = 16
     var paddingV: CGFloat = 8
     var maxWidth: CGFloat = 300
     var cursorOffset: CursorOffset = CursorOffset()
+    var borderColor: String = "#FFFFFF"
+    var borderOpacity: Double = 0.2
+    var borderWidth: CGFloat = 2
+    var shadowColor: String = "#1049A7"
+    var shadowOpacity: Double = 0.1
+    var shadowRadius: CGFloat = 3
+    var shadowX: CGFloat = 0
+    var shadowY: CGFloat = 5
 }
 
 struct BehaviorConfig: Codable, Sendable {

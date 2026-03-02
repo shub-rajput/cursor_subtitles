@@ -3,18 +3,40 @@ import SwiftUI
 struct PillView: View {
     @ObservedObject var viewModel: SubtitleViewModel
     @State private var cursorVisible = true
+    @State private var blinkTimer: Timer?
 
     private var style: StyleConfig { ConfigManager.shared.config.style }
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
     private var txtColor: Color { Color(hex: style.textColor) ?? .white }
+    private var textFont: Font {
+        if style.fontFamily == "system" {
+            return .system(size: style.fontSize, weight: .medium)
+        }
+        return .custom(style.fontFamily, size: style.fontSize)
+    }
+    private var cursorFont: Font {
+        if style.fontFamily == "system" {
+            return .system(size: style.fontSize, weight: .light)
+        }
+        return .custom(style.fontFamily, size: style.fontSize)
+    }
+    private var pillShape: UnevenRoundedRectangle {
+        UnevenRoundedRectangle(
+            topLeadingRadius: style.pointerCorner ? 0 : style.cornerRadius,
+            bottomLeadingRadius: style.cornerRadius,
+            bottomTrailingRadius: style.cornerRadius,
+            topTrailingRadius: style.cornerRadius,
+            style: .continuous
+        )
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Previous line — visible after Enter, fades out when typing starts
             if viewModel.showPreviousLine {
                 Text(viewModel.previousLine)
-                    .font(.system(size: style.fontSize, weight: .medium))
+                    .font(textFont)
                     .foregroundColor(txtColor)
                     .padding(.horizontal, style.paddingH)
                     .padding(.top, style.paddingV)
@@ -26,19 +48,19 @@ struct PillView: View {
             HStack(spacing: 0) {
                 if viewModel.isPlaceholder {
                     Text(viewModel.displayText)
-                        .font(.system(size: style.fontSize, weight: .medium))
+                        .font(textFont)
                         .foregroundColor(txtColor.opacity(0.7))
                 } else if viewModel.text.isEmpty {
                     // On new line, just show blinking cursor
                     Text(cursorVisible ? "|" : " ")
-                        .font(.system(size: style.fontSize, weight: .light))
+                        .font(cursorFont)
                         .foregroundColor(txtColor)
                 } else {
                     Text(viewModel.displayText)
-                        .font(.system(size: style.fontSize, weight: .medium))
+                        .font(textFont)
                         .foregroundColor(txtColor)
                     + Text(cursorVisible && viewModel.isActive ? "|" : " ")
-                        .font(.system(size: style.fontSize, weight: .light))
+                        .font(cursorFont)
                         .foregroundColor(txtColor)
                 }
             }
@@ -49,14 +71,34 @@ struct PillView: View {
         .frame(maxWidth: style.maxWidth, alignment: .leading)
         .fixedSize()
         .background(bgColor)
-        .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
+        .clipShape(pillShape)
+        .overlay(
+            pillShape
+                .strokeBorder(
+                    (Color(hex: style.borderColor) ?? .white)
+                        .opacity(style.borderOpacity),
+                    lineWidth: style.borderWidth
+                )
+        )
+        .shadow(
+            color: (Color(hex: style.shadowColor) ?? .black)
+                .opacity(style.shadowOpacity),
+            radius: style.shadowRadius,
+            x: style.shadowX,
+            y: style.shadowY
+        )
         .animation(nil, value: viewModel.showPreviousLine)
         .onAppear {
-            Timer.scheduledTimer(withTimeInterval: 0.53, repeats: true) { _ in
+            blinkTimer?.invalidate()
+            blinkTimer = Timer.scheduledTimer(withTimeInterval: 0.53, repeats: true) { _ in
                 Task { @MainActor in
                     cursorVisible.toggle()
                 }
             }
+        }
+        .onDisappear {
+            blinkTimer?.invalidate()
+            blinkTimer = nil
         }
     }
 }
