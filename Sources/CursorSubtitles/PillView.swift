@@ -2,21 +2,49 @@ import SwiftUI
 
 struct PillView: View {
     @ObservedObject var viewModel: SubtitleViewModel
+    @State private var cursorVisible = true
 
     private var style: StyleConfig { ConfigManager.shared.config.style }
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
     private var txtColor: Color { Color(hex: style.textColor) ?? .white }
 
+    private var dynamicCornerRadius: CGFloat {
+        let lineCount = viewModel.displayText.components(separatedBy: "\n").count
+        if lineCount > 1 {
+            return min(style.cornerRadius, 16)
+        }
+        return style.cornerRadius
+    }
+
     var body: some View {
-        Text(viewModel.displayText)
-            .font(.system(size: style.fontSize, weight: .medium))
-            .foregroundColor(viewModel.isPlaceholder ? txtColor.opacity(0.7) : txtColor)
-            .padding(.horizontal, style.paddingH)
-            .padding(.vertical, style.paddingV)
-            .background(bgColor)
-            .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
-            .fixedSize()
+        HStack(spacing: 0) {
+            if viewModel.isPlaceholder {
+                Text(viewModel.displayText)
+                    .font(.system(size: style.fontSize, weight: .medium))
+                    .foregroundColor(txtColor.opacity(0.7))
+            } else {
+                Text(viewModel.displayText)
+                    .font(.system(size: style.fontSize, weight: .medium))
+                    .foregroundColor(txtColor)
+                + Text(cursorVisible && viewModel.isActive ? "|" : " ")
+                    .font(.system(size: style.fontSize, weight: .light))
+                    .foregroundColor(txtColor)
+            }
+        }
+        .padding(.horizontal, style.paddingH)
+        .padding(.vertical, style.paddingV)
+        .frame(maxWidth: style.maxWidth, alignment: .leading)
+        .fixedSize()
+        .background(bgColor)
+        .clipShape(RoundedRectangle(cornerRadius: dynamicCornerRadius, style: .continuous))
+        .onAppear {
+            Timer.scheduledTimer(withTimeInterval: 0.53, repeats: true) { _ in
+                Task { @MainActor in
+                    cursorVisible.toggle()
+                }
+            }
+        }
     }
 }
 
