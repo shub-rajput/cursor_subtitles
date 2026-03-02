@@ -5,6 +5,7 @@
 final class EventManager {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var permissionTimer: Timer?
     private let viewModel: SubtitleViewModel
 
     init(viewModel: SubtitleViewModel) {
@@ -12,15 +13,31 @@ final class EventManager {
     }
 
     func start() {
-        // Check without prompting first; only prompt if not yet trusted
         if !AXIsProcessTrusted() {
             let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
             let options = [promptKey: true]
             _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
-            print("Accessibility permission not granted. Please grant access and relaunch.")
+            waitForPermission()
             return
         }
 
+        setupEventTap()
+    }
+
+    private func waitForPermission() {
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                if AXIsProcessTrusted() {
+                    self.permissionTimer?.invalidate()
+                    self.permissionTimer = nil
+                    self.setupEventTap()
+                }
+            }
+        }
+    }
+
+    private func setupEventTap() {
         let eventMask: CGEventMask =
             (1 << CGEventType.keyDown.rawValue) |
             (1 << CGEventType.leftMouseDown.rawValue) |
@@ -134,6 +151,8 @@ final class EventManager {
     }
 
     func stop() {
+        permissionTimer?.invalidate()
+        permissionTimer = nil
         if let tap = eventTap { CGEvent.tapEnable(tap: tap, enable: false) }
         if let source = runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }
     }
