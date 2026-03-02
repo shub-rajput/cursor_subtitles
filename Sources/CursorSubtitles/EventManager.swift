@@ -55,10 +55,12 @@ final class EventManager {
     // We only read viewModel.isActive (which is safe enough for a quick check)
     // and dispatch all mutations to the main actor.
     nonisolated private func handleEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
-        // Re-enable tap if it gets disabled by the system
+        // Re-enable tap if it gets disabled by the system, but only if we still have permission
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            if let tap = MainActor.assumeIsolated({ self.eventTap }) {
-                CGEvent.tapEnable(tap: tap, enable: true)
+            if AXIsProcessTrusted() {
+                if let tap = MainActor.assumeIsolated({ self.eventTap }) {
+                    CGEvent.tapEnable(tap: tap, enable: true)
+                }
             }
             return Unmanaged.passUnretained(event)
         }
