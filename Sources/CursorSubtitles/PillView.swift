@@ -9,35 +9,48 @@ struct PillView: View {
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
     private var txtColor: Color { Color(hex: style.textColor) ?? .white }
 
-    private var dynamicCornerRadius: CGFloat {
-        let lineCount = viewModel.displayText.components(separatedBy: "\n").count
-        if lineCount > 1 {
-            return min(style.cornerRadius, 16)
-        }
-        return style.cornerRadius
-    }
-
     var body: some View {
-        HStack(spacing: 0) {
-            if viewModel.isPlaceholder {
-                Text(viewModel.displayText)
-                    .font(.system(size: style.fontSize, weight: .medium))
-                    .foregroundColor(txtColor.opacity(0.7))
-            } else {
-                Text(viewModel.displayText)
+        VStack(alignment: .leading, spacing: 0) {
+            // Previous line — visible after Enter, fades out when typing starts
+            if viewModel.showPreviousLine {
+                Text(viewModel.previousLine)
                     .font(.system(size: style.fontSize, weight: .medium))
                     .foregroundColor(txtColor)
-                + Text(cursorVisible && viewModel.isActive ? "|" : " ")
-                    .font(.system(size: style.fontSize, weight: .light))
-                    .foregroundColor(txtColor)
+                    .padding(.horizontal, style.paddingH)
+                    .padding(.top, style.paddingV)
+                    .padding(.bottom, style.paddingV / 2)
+                    .transition(.opacity)
             }
+
+            // Current line (or placeholder)
+            HStack(spacing: 0) {
+                if viewModel.isPlaceholder {
+                    Text(viewModel.displayText)
+                        .font(.system(size: style.fontSize, weight: .medium))
+                        .foregroundColor(txtColor.opacity(0.7))
+                } else if viewModel.text.isEmpty {
+                    // On new line, just show blinking cursor
+                    Text(cursorVisible ? "|" : " ")
+                        .font(.system(size: style.fontSize, weight: .light))
+                        .foregroundColor(txtColor)
+                } else {
+                    Text(viewModel.displayText)
+                        .font(.system(size: style.fontSize, weight: .medium))
+                        .foregroundColor(txtColor)
+                    + Text(cursorVisible && viewModel.isActive ? "|" : " ")
+                        .font(.system(size: style.fontSize, weight: .light))
+                        .foregroundColor(txtColor)
+                }
+            }
+            .padding(.horizontal, style.paddingH)
+            .padding(.top, viewModel.showPreviousLine ? style.paddingV / 2 : style.paddingV)
+            .padding(.bottom, style.paddingV)
         }
-        .padding(.horizontal, style.paddingH)
-        .padding(.vertical, style.paddingV)
         .frame(maxWidth: style.maxWidth, alignment: .leading)
         .fixedSize()
         .background(bgColor)
-        .clipShape(RoundedRectangle(cornerRadius: dynamicCornerRadius, style: .continuous))
+        .clipShape(RoundedRectangle(cornerRadius: style.cornerRadius, style: .continuous))
+        .animation(nil, value: viewModel.showPreviousLine)
         .onAppear {
             Timer.scheduledTimer(withTimeInterval: 0.53, repeats: true) { _ in
                 Task { @MainActor in

@@ -8,14 +8,20 @@ class SubtitleViewModel: ObservableObject {
     @Published var cursorPosition: NSPoint = .zero
     @Published var isVisible: Bool = false
 
+    /// The previous line shown above, fading out when user starts typing on the new line
+    @Published var previousLine: String = ""
+    @Published var showPreviousLine: Bool = false
+    /// Whether cursor is on a new blank line (Enter pressed, haven't typed yet)
+    @Published var onNewLine: Bool = false
+
     var config: ConfigManager { ConfigManager.shared }
 
     var displayText: String {
-        if text.isEmpty { return config.config.style.placeholderText }
+        if text.isEmpty && !onNewLine { return config.config.style.placeholderText }
         return text
     }
 
-    var isPlaceholder: Bool { text.isEmpty }
+    var isPlaceholder: Bool { text.isEmpty && !onNewLine && isActive }
 
     private var idleTimer: Timer?
 
@@ -32,6 +38,9 @@ class SubtitleViewModel: ObservableObject {
 
     func activate() {
         text = ""
+        previousLine = ""
+        showPreviousLine = false
+        onNewLine = false
         isActive = true
         isVisible = true
         resetIdleTimer()
@@ -42,11 +51,21 @@ class SubtitleViewModel: ObservableObject {
         isActive = false
         isVisible = false
         text = ""
+        previousLine = ""
+        showPreviousLine = false
+        onNewLine = false
     }
 
     func handleCharacter(_ char: String) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
+
+        // If we're on a new line and start typing, fade out the previous line
+        if onNewLine && showPreviousLine {
+            showPreviousLine = false
+        }
+        onNewLine = false
+
         if text.count < config.config.behavior.charLimit {
             text += char
         }
@@ -56,9 +75,13 @@ class SubtitleViewModel: ObservableObject {
     func handleNewline() {
         guard isActive else { return }
         if !isVisible { isVisible = true }
-        let currentLines = text.components(separatedBy: "\n").count
-        if currentLines < config.config.behavior.maxLines {
-            text += "\n"
+
+        // Move current text to previous line, show it above
+        if !text.isEmpty {
+            previousLine = text
+            showPreviousLine = true
+            text = ""
+            onNewLine = true
         }
         resetIdleTimer()
     }
