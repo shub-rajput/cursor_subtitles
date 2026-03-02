@@ -3,6 +3,9 @@ import SwiftUI
 struct PillContainerView: View {
     @ObservedObject var viewModel: SubtitleViewModel
 
+    private var fadeIn: Double { ConfigManager.shared.config.behavior.fadeInDuration }
+    private var fadeOut: Double { ConfigManager.shared.config.behavior.fadeOutDuration }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             Color.clear
@@ -15,6 +18,10 @@ struct PillContainerView: View {
                     .transition(.opacity)
             }
         }
-        .animation(.easeInOut(duration: 0.2), value: viewModel.isVisible)
+        .animation(viewModel.isVisible
+            ? .easeInOut(duration: fadeIn)
+            : .easeInOut(duration: fadeOut),
+            value: viewModel.isVisible
+        )
     }
 }
