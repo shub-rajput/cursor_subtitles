@@ -12,10 +12,12 @@ final class EventManager {
     }
 
     func start() {
-        let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-        let options = [promptKey: true]
-        guard AXIsProcessTrustedWithOptions(options as CFDictionary) else {
-            print("Accessibility permission not granted.")
+        // Check without prompting first; only prompt if not yet trusted
+        if !AXIsProcessTrusted() {
+            let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
+            let options = [promptKey: true]
+            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+            print("Accessibility permission not granted. Please grant access and relaunch.")
             return
         }
 

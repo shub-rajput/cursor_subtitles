@@ -4,12 +4,12 @@ struct PillContainerView: View {
     @ObservedObject var viewModel: SubtitleViewModel
 
     var body: some View {
-        ZStack {
+        ZStack(alignment: .topLeading) {
             Color.clear
             if viewModel.isVisible {
                 PillView(viewModel: viewModel)
-                    .position(
-                        x: viewModel.cursorPosition.x + ConfigManager.shared.config.style.cursorOffset.x + 60,
+                    .offset(
+                        x: viewModel.cursorPosition.x + ConfigManager.shared.config.style.cursorOffset.x,
                         y: viewModel.cursorPosition.y + ConfigManager.shared.config.style.cursorOffset.y
                     )
                     .transition(.opacity)
