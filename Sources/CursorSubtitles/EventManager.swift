@@ -78,6 +78,13 @@ final class EventManager {
                 if let tap = MainActor.assumeIsolated({ self.eventTap }) {
                     CGEvent.tapEnable(tap: tap, enable: true)
                 }
+            } else {
+                // Permission was revoked — tear down and wait for re-grant
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        self.handlePermissionLost()
+                    }
+                }
             }
             return Unmanaged.passUnretained(event)
         }
@@ -150,10 +157,26 @@ final class EventManager {
         return Unmanaged.passUnretained(event)
     }
 
+    private func handlePermissionLost() {
+        viewModel.dismiss()
+        tearDownEventTap()
+        waitForPermission()
+    }
+
+    private func tearDownEventTap() {
+        if let tap = eventTap {
+            CGEvent.tapEnable(tap: tap, enable: false)
+        }
+        if let source = runLoopSource {
+            CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
+        }
+        eventTap = nil
+        runLoopSource = nil
+    }
+
     func stop() {
         permissionTimer?.invalidate()
         permissionTimer = nil
-        if let tap = eventTap { CGEvent.tapEnable(tap: tap, enable: false) }
-        if let source = runLoopSource { CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes) }
+        tearDownEventTap()
     }
 }
