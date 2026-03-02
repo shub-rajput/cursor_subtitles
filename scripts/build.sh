@@ -11,6 +11,8 @@ mkdir -p "${APP_NAME}.app/Contents/MacOS"
 
 cp "${BUILD_DIR}/${APP_NAME}" "${APP_NAME}.app/Contents/MacOS/"
 cp "Info.plist" "${APP_NAME}.app/Contents/"
+mkdir -p "${APP_NAME}.app/Contents/Resources"
+cp Resources/* "${APP_NAME}.app/Contents/Resources/"
 
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
     codesign --force --deep --sign "CursorSubtitles" --identifier "com.cursor-subtitles.app" "${APP_NAME}.app"

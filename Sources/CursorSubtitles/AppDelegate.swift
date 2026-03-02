@@ -23,7 +23,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupMenubar() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "cursorarrow", accessibilityDescription: "Cursor Subtitles")
+            if let iconPath = Bundle.main.path(forResource: "MenuBarIcon", ofType: "png"),
+               let icon = NSImage(contentsOfFile: iconPath) {
+                icon.isTemplate = true
+                icon.size = NSSize(width: 18, height: 18)
+                button.image = icon
+            } else {
+                button.image = NSImage(systemSymbolName: "cursorarrow", accessibilityDescription: "Cursor Subtitles")
+            }
         }
 
         let menu = NSMenu()
