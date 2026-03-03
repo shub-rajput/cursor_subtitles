@@ -1,11 +1,14 @@
 import SwiftUI
+import Combine
 
 struct PillView: View {
     @ObservedObject var viewModel: SubtitleViewModel
+    @ObservedObject private var configManager = ConfigManager.shared
     @State private var cursorVisible = true
-    @State private var blinkTimer: Timer?
 
-    private var style: StyleConfig { ConfigManager.shared.config.style }
+    private let blinkPublisher = Timer.publish(every: 0.53, on: .main, in: .common).autoconnect()
+
+    private var style: StyleConfig { configManager.config.style }
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
 
@@ -87,11 +90,10 @@ struct PillView: View {
             if viewModel.showPreviousLine {
                 Text(viewModel.previousLine)
                     .font(textFont)
-                    .foregroundColor(txtColor)
+                    .foregroundStyle(txtColor)
                     .padding(.horizontal, style.paddingH)
                     .padding(.top, style.paddingV)
                     .padding(.bottom, style.paddingV / 2)
-                    .transition(.opacity)
             }
 
             // Current line (or placeholder)
@@ -99,12 +101,12 @@ struct PillView: View {
                 if viewModel.isPlaceholder {
                     Text(viewModel.displayText)
                         .font(textFont)
-                        .foregroundColor(txtColor.opacity(0.7))
+                        .foregroundStyle(txtColor.opacity(0.7))
                 } else if viewModel.text.isEmpty {
                     // On new line, just show blinking cursor
                     Text(cursorVisible ? "|" : " ")
                         .font(cursorFont)
-                        .foregroundColor(txtColor)
+                        .foregroundStyle(txtColor)
                 } else {
                     Text(viewModel.displayText)
                         .font(textFont)
@@ -143,18 +145,7 @@ struct PillView: View {
             y: style.shadowY
         )
         .animation(nil, value: viewModel.showPreviousLine)
-        .onAppear {
-            blinkTimer?.invalidate()
-            blinkTimer = Timer.scheduledTimer(withTimeInterval: 0.53, repeats: true) { _ in
-                Task { @MainActor in
-                    cursorVisible.toggle()
-                }
-            }
-        }
-        .onDisappear {
-            blinkTimer?.invalidate()
-            blinkTimer = nil
-        }
+        .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
     }
 }
 
