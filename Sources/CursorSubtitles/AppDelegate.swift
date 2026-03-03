@@ -93,7 +93,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ("Pink", "#DB2777"),
             ("Purple", "#7C3AED"),
             ("Orange", "#D97706"),
-            ("Slate", "0F172A"),
+            ("Slate", "#0F172A"),
         ]
         let currentColor = ConfigManager.shared.config.style.backgroundColor.uppercased()
         for (name, hex) in colors {
