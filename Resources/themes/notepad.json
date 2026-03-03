@@ -1,0 +1,18 @@
+{
+  "name": "Notepad",
+  "style": {
+    "backgroundColor": "#FFF8E7",
+    "textColor": "#3B3022",
+    "fontFamily": "Georgia",
+    "fontWeight": "regular",
+    "cornerRadius": 12,
+    "pointerCorner": false,
+    "borderColor": "#C8B99A",
+    "borderOpacity": 0.4,
+    "borderWidth": 1,
+    "shadowColor": "#B8A88A",
+    "shadowOpacity": 0.12,
+    "shadowRadius": 4,
+    "shadowY": 2
+  }
+}
