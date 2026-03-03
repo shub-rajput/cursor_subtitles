@@ -5,6 +5,7 @@
 final class EventManager {
     private var eventTap: CFMachPort?
     private var runLoopSource: CFRunLoopSource?
+    private var selfPtr: Unmanaged<EventManager>?
     private var permissionTimer: Timer?
     private let viewModel: SubtitleViewModel
 
@@ -43,7 +44,8 @@ final class EventManager {
             (1 << CGEventType.leftMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue)
 
-        let selfPtr = Unmanaged.passRetained(self).toOpaque()
+        let retainedSelf = Unmanaged.passRetained(self)
+        self.selfPtr = retainedSelf
 
         eventTap = CGEvent.tapCreate(
             tap: .cgSessionEventTap,
@@ -55,7 +57,7 @@ final class EventManager {
                 let manager = Unmanaged<EventManager>.fromOpaque(refcon).takeUnretainedValue()
                 return manager.handleEvent(type: type, event: event)
             },
-            userInfo: selfPtr
+            userInfo: retainedSelf.toOpaque()
         )
 
         guard let tap = eventTap else {
@@ -118,57 +120,17 @@ final class EventManager {
             return nil
         }
 
-        // Cmd+Down: next theme (keyCode 125)
-        if keyCode == 125 && mods.contains(.command) {
+        // Cmd+arrow shortcuts (only when pill is active)
+        let cmdArrowActions: [UInt16: @MainActor () -> Void] = [
+            125: { ConfigManager.shared.cycleTheme(forward: true) },   // Cmd+Down
+            126: { ConfigManager.shared.cycleTheme(forward: false) },  // Cmd+Up
+            124: { ConfigManager.shared.adjustFontSize(increase: true) },  // Cmd+Right
+            123: { ConfigManager.shared.adjustFontSize(increase: false) }, // Cmd+Left
+        ]
+        if mods.contains(.command), let action = cmdArrowActions[keyCode] {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
             if isActive {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
-                        ConfigManager.shared.cycleTheme(forward: true)
-                    }
-                }
-                return nil
-            }
-            return Unmanaged.passUnretained(event)
-        }
-
-        // Cmd+Up: previous theme (keyCode 126)
-        if keyCode == 126 && mods.contains(.command) {
-            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
-            if isActive {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
-                        ConfigManager.shared.cycleTheme(forward: false)
-                    }
-                }
-                return nil
-            }
-            return Unmanaged.passUnretained(event)
-        }
-
-        // Cmd+Right: increase font size (keyCode 124)
-        if keyCode == 124 && mods.contains(.command) {
-            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
-            if isActive {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
-                        ConfigManager.shared.adjustFontSize(increase: true)
-                    }
-                }
-                return nil
-            }
-            return Unmanaged.passUnretained(event)
-        }
-
-        // Cmd+Left: decrease font size (keyCode 123)
-        if keyCode == 123 && mods.contains(.command) {
-            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
-            if isActive {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
-                        ConfigManager.shared.adjustFontSize(increase: false)
-                    }
-                }
+                DispatchQueue.main.async { MainActor.assumeIsolated { action() } }
                 return nil
             }
             return Unmanaged.passUnretained(event)
@@ -226,6 +188,8 @@ final class EventManager {
         if let source = runLoopSource {
             CFRunLoopRemoveSource(CFRunLoopGetMain(), source, .commonModes)
         }
+        selfPtr?.release()
+        selfPtr = nil
         eventTap = nil
         runLoopSource = nil
     }
