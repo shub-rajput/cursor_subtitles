@@ -19,8 +19,14 @@ final class CursorTracker {
                 guard let screen = screen else { return }
                 let localX = mouseLocation.x - screen.frame.origin.x
                 let localY = screen.frame.height - (mouseLocation.y - screen.frame.origin.y)
-                self.viewModel.cursorPosition = NSPoint(x: localX, y: localY)
-                self.viewModel.activeScreenID = ObjectIdentifier(screen)
+                let newPos = NSPoint(x: localX, y: localY)
+                if newPos != self.viewModel.cursorPosition {
+                    self.viewModel.cursorPosition = newPos
+                }
+                let newScreenID = ObjectIdentifier(screen)
+                if newScreenID != self.viewModel.activeScreenID {
+                    self.viewModel.activeScreenID = newScreenID
+                }
             }
         }
     }
