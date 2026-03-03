@@ -1,6 +1,6 @@
 # Cursor Subtitles
 
-A lightweight macOS menubar app that displays Figma-style cursor chat bubbles — perfect for real-time subtitles while screen recording.
+A lightweight macOS menubar app that displays cursor chat bubbles — perfect for real-time subtitles while screen recording.
 
 ## Install
 
