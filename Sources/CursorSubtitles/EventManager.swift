@@ -146,6 +146,34 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
+        // Cmd+Right: increase font size (keyCode 124)
+        if keyCode == 124 && mods.contains(.command) {
+            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
+            if isActive {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        ConfigManager.shared.adjustFontSize(increase: true)
+                    }
+                }
+                return nil
+            }
+            return Unmanaged.passUnretained(event)
+        }
+
+        // Cmd+Left: decrease font size (keyCode 123)
+        if keyCode == 123 && mods.contains(.command) {
+            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
+            if isActive {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        ConfigManager.shared.adjustFontSize(increase: false)
+                    }
+                }
+                return nil
+            }
+            return Unmanaged.passUnretained(event)
+        }
+
         // When pill not active, pass through
         let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
         guard isActive else { return Unmanaged.passUnretained(event) }

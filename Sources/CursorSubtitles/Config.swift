@@ -198,6 +198,10 @@ class ConfigManager: ObservableObject {
 
     func setTheme(_ themeName: String?) {
         guard var dict = readConfigDict() else { return }
+        // Preserve user font size override across theme changes
+        let existingStyle = dict["style"] as? [String: Any]
+        let savedFontSize = existingStyle?["fontSize"]
+
         if let themeName {
             dict["theme"] = themeName
             // Remove style and behavior overrides so the theme takes full effect.
@@ -207,6 +211,14 @@ class ConfigManager: ObservableObject {
         } else {
             dict.removeValue(forKey: "theme")
         }
+
+        // Restore font size if user had set one
+        if let savedFontSize {
+            var styleDict = dict["style"] as? [String: Any] ?? [:]
+            styleDict["fontSize"] = savedFontSize
+            dict["style"] = styleDict
+        }
+
         writeConfigDict(dict)
     }
 
@@ -238,6 +250,18 @@ class ConfigManager: ObservableObject {
             // Currently on default
             setTheme(forward ? themes[0].filename : themes[themes.count - 1].filename)
         }
+    }
+
+    func adjustFontSize(increase: Bool) {
+        let current = config.style.fontSize
+        let step: CGFloat = 2
+        let newSize = increase ? min(current + step, 48) : max(current - step, 8)
+        guard newSize != current else { return }
+        guard var dict = readConfigDict() else { return }
+        var styleDict = dict["style"] as? [String: Any] ?? [:]
+        styleDict["fontSize"] = newSize
+        dict["style"] = styleDict
+        writeConfigDict(dict)
     }
 
     func setColor(_ hex: String) {
