@@ -8,6 +8,35 @@ struct PillView: View {
     private var style: StyleConfig { ConfigManager.shared.config.style }
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
+
+    private var swiftUIMaterial: Material {
+        switch style.vibrancy {
+        case "ultraThin": return .ultraThinMaterial
+        case "thin": return .thinMaterial
+        case "regular": return .regularMaterial
+        case "thick": return .thickMaterial
+        case "ultraThick": return .ultraThickMaterial
+        default: return .ultraThinMaterial
+        }
+    }
+
+    @ViewBuilder
+    private var pillBackground: some View {
+        if style.vibrancy != nil {
+            Rectangle().fill(swiftUIMaterial)
+                .overlay(bgColor.opacity(style.backgroundOpacity))
+        } else if let gradientColors = style.backgroundGradient,
+                  gradientColors.count >= 2 {
+            LinearGradient(
+                colors: gradientColors.compactMap { Color(hex: $0) },
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .opacity(style.backgroundOpacity)
+        } else {
+            bgColor.opacity(style.backgroundOpacity)
+        }
+    }
     private var txtColor: Color { Color(hex: style.textColor) ?? .white }
     private var textFont: Font {
         if style.fontFamily == "system" {
@@ -70,8 +99,13 @@ struct PillView: View {
         }
         .frame(maxWidth: style.maxWidth, alignment: .leading)
         .fixedSize()
-        .background(bgColor)
+        .background(pillBackground)
         .clipShape(pillShape)
+        .modifier(GlassEffectModifier(
+            enabled: style.glassEffect,
+            tint: bgColor.opacity(style.backgroundOpacity),
+            shape: pillShape
+        ))
         .overlay(
             pillShape
                 .strokeBorder(
@@ -99,6 +133,20 @@ struct PillView: View {
         .onDisappear {
             blinkTimer?.invalidate()
             blinkTimer = nil
+        }
+    }
+}
+
+struct GlassEffectModifier: ViewModifier {
+    let enabled: Bool
+    let tint: Color
+    let shape: UnevenRoundedRectangle
+
+    func body(content: Content) -> some View {
+        if enabled, #available(macOS 26.0, *) {
+            content.glassEffect(.regular.tint(tint), in: shape)
+        } else {
+            content
         }
     }
 }
