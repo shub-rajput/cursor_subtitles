@@ -5,8 +5,8 @@ A lightweight macOS menubar app that displays cursor chat bubbles — perfect fo
 ## Install
 
 ```bash
-git clone <repo>
-cd cursor-subtitles
+git clone https://github.com/shub-rajput/cursor_subtitles.git
+cd cursor_subtitles
 chmod +x scripts/build.sh
 ./scripts/build.sh
 open CursorSubtitles.app
@@ -51,6 +51,8 @@ Switch themes from the menubar icon → **Theme**. Built-in themes:
 - **Frosted Glass** — translucent frosted blur
 - **Modern** — gradient background
 - **Terminal** — dark, square corners, monospace font
+- **Blocky** — bold yellow with hard shadow
+- **Notepad** — warm parchment with Georgia serif
 
 When no theme is selected, a **Color** submenu lets you quickly change the pill color from preset options.
 
@@ -79,7 +81,7 @@ A minimal config looks like:
 
 ```json
 {
-  "hotkey": "cmd/",
+  "hotkey": "cmd+/",
   "theme": "liquid-glass"
 }
 ```
@@ -88,7 +90,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 
 ```json
 {
-  "hotkey": "cmd/",
+  "hotkey": "cmd+/",
   "theme": "terminal",
   "style": {
     "fontSize": 18
@@ -133,8 +135,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `idleTimeout` — seconds before fade (default: `10`)
 - `fadeOutDuration` — fade out duration in seconds (default: `0.5`)
 - `fadeInDuration` — fade in duration in seconds (default: `0.2`)
-- `maxLines` — max line count (default: `5`)
-- `charLimit` — max characters per line (default: `200`)
+- `charLimit` — max characters per line (default: `30`)
 
 Changes apply instantly — no restart needed.
 
