@@ -86,11 +86,11 @@ struct PillView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            // Previous line — visible after Enter, fades out when typing starts
+            // Previous line
             if viewModel.showPreviousLine {
                 Text(viewModel.previousLine)
                     .font(textFont)
-                    .foregroundStyle(txtColor)
+                    .foregroundStyle(txtColor.opacity(0.5))
                     .padding(.horizontal, style.paddingH)
                     .padding(.top, style.paddingV)
                     .padding(.bottom, style.paddingV / 2)
@@ -110,10 +110,10 @@ struct PillView: View {
                 } else {
                     Text(viewModel.displayText)
                         .font(textFont)
-                        .foregroundColor(txtColor)
+                        .foregroundStyle(txtColor)
                     + Text(cursorVisible && viewModel.isActive ? "|" : " ")
                         .font(cursorFont)
-                        .foregroundColor(txtColor)
+                        .foregroundStyle(txtColor)
                 }
             }
             .padding(.horizontal, style.paddingH)
@@ -122,7 +122,12 @@ struct PillView: View {
         }
         .frame(maxWidth: style.maxWidth, alignment: .leading)
         .fixedSize()
-        .background(pillBackground)
+        .animation(.snappy(duration: 0.2), value: viewModel.text)
+        .background {
+            if !style.glassEffect {
+                pillBackground
+            }
+        }
         .clipShape(pillShape)
         .modifier(GlassEffectModifier(
             enabled: style.glassEffect,
@@ -144,7 +149,6 @@ struct PillView: View {
             x: style.shadowX,
             y: style.shadowY
         )
-        .animation(nil, value: viewModel.showPreviousLine)
         .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
     }
 }
