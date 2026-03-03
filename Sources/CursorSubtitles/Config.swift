@@ -20,11 +20,15 @@ struct StyleConfig: Codable, Sendable {
     var borderColor: String = "#FFFFFF"
     var borderOpacity: Double = 0.2
     var borderWidth: CGFloat = 2
-    var shadowColor: String = "#1049A7"
+    var shadowColor: String = "#000000"
     var shadowOpacity: Double = 0.1
     var shadowRadius: CGFloat = 3
     var shadowX: CGFloat = 0
     var shadowY: CGFloat = 5
+    var backgroundOpacity: Double = 1.0
+    var vibrancy: String? = nil
+    var backgroundGradient: [String]? = nil
+    var glassEffect: Bool = false
 }
 
 struct BehaviorConfig: Codable, Sendable {
@@ -37,6 +41,7 @@ struct BehaviorConfig: Codable, Sendable {
 
 struct AppConfig: Codable, Sendable {
     var hotkey: String = "cmd+/"
+    var theme: String? = nil
     var style: StyleConfig = StyleConfig()
     var behavior: BehaviorConfig = BehaviorConfig()
 }
@@ -54,22 +59,88 @@ class ConfigManager: ObservableObject {
         return dir.appendingPathComponent("config.json")
     }()
 
+    private nonisolated let themesURL: URL = {
+        let dir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/cursor-subtitles/themes")
+        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        return dir
+    }()
+
     private var fileMonitor: DispatchSourceFileSystemObject?
 
     init() {
+        seedBuiltInThemes()
         loadConfig()
         watchConfig()
     }
 
+    nonisolated func seedBuiltInThemes() {
+        guard let bundlePath = Bundle.main.resourcePath else { return }
+        let bundleThemes = URL(fileURLWithPath: bundlePath).appendingPathComponent("themes")
+        guard FileManager.default.fileExists(atPath: bundleThemes.path) else { return }
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: bundleThemes, includingPropertiesForKeys: nil
+        ) else { return }
+        for file in files where file.pathExtension == "json" {
+            let dest = themesURL.appendingPathComponent(file.lastPathComponent)
+            if !FileManager.default.fileExists(atPath: dest.path) {
+                try? FileManager.default.copyItem(at: file, to: dest)
+            }
+        }
+    }
+
+    private nonisolated static func deepMerge(
+        _ base: [String: Any],
+        _ override: [String: Any]
+    ) -> [String: Any] {
+        var result = base
+        for (key, value) in override {
+            if let baseDict = result[key] as? [String: Any],
+               let overrideDict = value as? [String: Any] {
+                result[key] = deepMerge(baseDict, overrideDict)
+            } else {
+                result[key] = value
+            }
+        }
+        return result
+    }
+
     func loadConfig() {
-        guard FileManager.default.fileExists(atPath: configURL.path) else {
-            saveDefaultConfig()
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let defaultData = try? encoder.encode(AppConfig()),
+              var merged = try? JSONSerialization.jsonObject(with: defaultData) as? [String: Any]
+        else {
+            config = AppConfig()
             return
         }
+
+        var userDict: [String: Any] = [:]
+        if FileManager.default.fileExists(atPath: configURL.path),
+           let userData = try? Data(contentsOf: configURL),
+           let userObj = try? JSONSerialization.jsonObject(with: userData) as? [String: Any] {
+            userDict = userObj
+        } else {
+            saveDefaultConfig()
+            config = AppConfig()
+            return
+        }
+
+        if let themeName = userDict["theme"] as? String {
+            let themeFile = themesURL.appendingPathComponent("\(themeName).json")
+            if let themeData = try? Data(contentsOf: themeFile),
+               let themeDict = try? JSONSerialization.jsonObject(with: themeData) as? [String: Any] {
+                var themeConfig = themeDict
+                themeConfig.removeValue(forKey: "name")
+                merged = ConfigManager.deepMerge(merged, themeConfig)
+            }
+        }
+
+        merged = ConfigManager.deepMerge(merged, userDict)
+
         do {
-            let data = try Data(contentsOf: configURL)
-            let decoder = JSONDecoder()
-            config = try decoder.decode(AppConfig.self, from: data)
+            let mergedData = try JSONSerialization.data(withJSONObject: merged)
+            config = try JSONDecoder().decode(AppConfig.self, from: mergedData)
         } catch {
             print("Failed to load config: \(error). Using defaults.")
             config = AppConfig()
@@ -104,5 +175,61 @@ class ConfigManager: ObservableObject {
             close(fd)
         }
         fileMonitor?.resume()
+    }
+
+    func availableThemes() -> [(name: String, filename: String)] {
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: themesURL, includingPropertiesForKeys: nil
+        ) else { return [] }
+
+        return files
+            .filter { $0.pathExtension == "json" }
+            .compactMap { file -> (String, String)? in
+                guard let data = try? Data(contentsOf: file),
+                      let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+                      let name = dict["name"] as? String
+                else { return nil }
+                let filename = file.deletingPathExtension().lastPathComponent
+                return (name, filename)
+            }
+            .sorted { $0.name < $1.name }
+    }
+
+    func setTheme(_ themeName: String?) {
+        guard var dict = readConfigDict() else { return }
+        if let themeName {
+            dict["theme"] = themeName
+            // Remove style and behavior overrides so the theme takes full effect.
+            // Users can add specific overrides back manually in config.json.
+            dict.removeValue(forKey: "style")
+            dict.removeValue(forKey: "behavior")
+        } else {
+            dict.removeValue(forKey: "theme")
+        }
+        writeConfigDict(dict)
+    }
+
+    func setColor(_ hex: String) {
+        guard var dict = readConfigDict() else { return }
+        var styleDict = dict["style"] as? [String: Any] ?? [:]
+        styleDict["backgroundColor"] = hex
+        dict["style"] = styleDict
+        writeConfigDict(dict)
+    }
+
+    private func readConfigDict() -> [String: Any]? {
+        guard let data = try? Data(contentsOf: configURL),
+              let dict = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        return dict
+    }
+
+    private func writeConfigDict(_ dict: [String: Any]) {
+        do {
+            let data = try JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .sortedKeys])
+            try data.write(to: configURL)
+        } catch {
+            print("Failed to write config: \(error)")
+        }
     }
 }
