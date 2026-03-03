@@ -112,6 +112,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `placeholderText` — placeholder text (default: `Say something`)
 - `fontSize` — font size (default: `14`)
 - `fontFamily` — font name or `system` (default: `system`)
+- `fontWeight` — font weight: `ultraLight`, `thin`, `light`, `regular`, `medium`, `semibold`, `bold`, `heavy`, `black` (default: `medium`)
 - `cornerRadius` — pill roundness (default: `20`)
 - `pointerCorner` — sharp top-left corner pointing at cursor (default: `true`)
 - `paddingH` — horizontal padding (default: `16`)

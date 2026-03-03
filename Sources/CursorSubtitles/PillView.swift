@@ -38,15 +38,36 @@ struct PillView: View {
         }
     }
     private var txtColor: Color { Color(hex: style.textColor) ?? .white }
+
+    private static let weightMap: [String: Font.Weight] = [
+        "ultraLight": .ultraLight, "thin": .thin, "light": .light,
+        "regular": .regular, "medium": .medium, "semibold": .semibold,
+        "bold": .bold, "heavy": .heavy, "black": .black,
+    ]
+    private static let weightOrder: [Font.Weight] = [
+        .ultraLight, .thin, .light, .regular, .medium, .semibold, .bold, .heavy, .black,
+    ]
+
+    private var parsedWeight: Font.Weight {
+        Self.weightMap[style.fontWeight] ?? .medium
+    }
+
+    private var cursorWeight: Font.Weight {
+        guard let idx = Self.weightOrder.firstIndex(of: parsedWeight), idx > 0 else {
+            return .ultraLight
+        }
+        return Self.weightOrder[idx - 1]
+    }
+
     private var textFont: Font {
         if style.fontFamily == "system" {
-            return .system(size: style.fontSize, weight: .medium)
+            return .system(size: style.fontSize, weight: parsedWeight)
         }
         return .custom(style.fontFamily, size: style.fontSize)
     }
     private var cursorFont: Font {
         if style.fontFamily == "system" {
-            return .system(size: style.fontSize, weight: .light)
+            return .system(size: style.fontSize, weight: cursorWeight)
         }
         return .custom(style.fontFamily, size: style.fontSize)
     }
