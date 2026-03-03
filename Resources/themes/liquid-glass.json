@@ -2,7 +2,7 @@
   "name": "Liquid Glass",
   "style": {
     "glassEffect": true,
-    "backgroundColor": "#FFFFFF",
+    "backgroundColor": "#000000",
     "backgroundOpacity": 0.12,
     "textColor": "#FFFFFF",
     "borderColor": "#FFFFFF",
