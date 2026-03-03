@@ -1,6 +1,6 @@
 # Cursor Subtitles
 
-A lightweight macOS menubar app that displays cursor chat bubbles — perfect for real-time subtitles while screen recording.
+A lightweight macOS menubar app that displays cursor chat bubbles — perfect for real-time subtitles while screen recording. Requires **macOS 14.0+** (Sonoma or later).
 
 ## Install
 
@@ -48,7 +48,7 @@ Switch themes from the menubar icon → **Theme**. Built-in themes:
 
 - **Default** — solid blue pill (no theme selected)
 - **Liquid Glass** — Apple's native glass effect (macOS Tahoe/26+)
-- **Frosted Glass** — translucent frosted blur (macOS 13+)
+- **Frosted Glass** — translucent frosted blur
 - **Modern** — gradient background
 - **Terminal** — dark, square corners, monospace font
 

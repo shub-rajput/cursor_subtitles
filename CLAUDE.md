@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 CursorSubtitles is a native macOS menubar app that displays chat bubbles near the cursor for real-time on-screen subtitles while screen recording. It has no external dependencies — pure Swift with AppKit, SwiftUI, and CoreGraphics.
 
-**Platform:** macOS 13.0+ | **Swift Tools:** 6.0 | **Build System:** Swift Package Manager
+**Platform:** macOS 14.0+ (Sonoma) | **Swift Tools:** 6.0 | **Build System:** Swift Package Manager
 
 ## Build & Run
 
