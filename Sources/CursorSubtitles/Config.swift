@@ -214,21 +214,30 @@ class ConfigManager: ObservableObject {
         let themes = availableThemes()
         guard !themes.isEmpty else { return }
 
+        // Cycle order: default (nil) → themes[0] → themes[1] → ... → default → ...
         let currentTheme = config.theme
         let currentIndex = themes.firstIndex { $0.filename == currentTheme }
 
-        let nextIndex: Int
         if let currentIndex = currentIndex {
             if forward {
-                nextIndex = (currentIndex + 1) % themes.count
+                let next = currentIndex + 1
+                if next >= themes.count {
+                    setTheme(nil) // wrap to default
+                } else {
+                    setTheme(themes[next].filename)
+                }
             } else {
-                nextIndex = (currentIndex - 1 + themes.count) % themes.count
+                let prev = currentIndex - 1
+                if prev < 0 {
+                    setTheme(nil) // wrap to default
+                } else {
+                    setTheme(themes[prev].filename)
+                }
             }
         } else {
-            nextIndex = forward ? 0 : themes.count - 1
+            // Currently on default
+            setTheme(forward ? themes[0].filename : themes[themes.count - 1].filename)
         }
-
-        setTheme(themes[nextIndex].filename)
     }
 
     func setColor(_ hex: String) {
