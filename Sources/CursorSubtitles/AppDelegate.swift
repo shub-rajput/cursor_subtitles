@@ -1,7 +1,7 @@
 import AppKit
 
 @MainActor
-class AppDelegate: NSObject, NSApplicationDelegate {
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
     private let viewModel = SubtitleViewModel()
     private var overlayController: OverlayController!
@@ -33,15 +33,111 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
 
+        statusItem.menu = buildMenu()
+    }
+
+    private func buildMenu() -> NSMenu {
         let menu = NSMenu()
+        menu.delegate = self
+
         let toggleItem = NSMenuItem(title: "Enabled", action: #selector(toggleEnabled), keyEquivalent: "")
-        toggleItem.state = .on
+        toggleItem.state = isEnabled ? .on : .off
         menu.addItem(toggleItem)
+        menu.addItem(NSMenuItem.separator())
+
+        let themeItem = NSMenuItem(title: "Theme", action: nil, keyEquivalent: "")
+        themeItem.submenu = buildThemeMenu()
+        menu.addItem(themeItem)
+
+        if ConfigManager.shared.config.theme == nil {
+            let colorItem = NSMenuItem(title: "Color", action: nil, keyEquivalent: "")
+            colorItem.submenu = buildColorMenu()
+            menu.addItem(colorItem)
+        }
+
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit Config...", action: #selector(openConfig), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
-        statusItem.menu = menu
+        return menu
+    }
+
+    private func buildThemeMenu() -> NSMenu {
+        let submenu = NSMenu()
+        let currentTheme = ConfigManager.shared.config.theme
+
+        let defaultItem = NSMenuItem(title: "Default", action: #selector(selectTheme(_:)), keyEquivalent: "")
+        defaultItem.representedObject = nil as String?
+        defaultItem.state = currentTheme == nil ? .on : .off
+        submenu.addItem(defaultItem)
+        submenu.addItem(NSMenuItem.separator())
+
+        let themes = ConfigManager.shared.availableThemes()
+        for theme in themes {
+            let item = NSMenuItem(title: theme.name, action: #selector(selectTheme(_:)), keyEquivalent: "")
+            item.representedObject = theme.filename
+            item.state = currentTheme == theme.filename ? .on : .off
+            submenu.addItem(item)
+        }
+
+        return submenu
+    }
+
+    private func buildColorMenu() -> NSMenu {
+        let submenu = NSMenu()
+        let colors: [(String, String)] = [
+            ("Blue", "#256CEF"),
+            ("Red", "#991B1B"),
+            ("Green", "#16A34A"),
+            ("Yellow", "#E6AE00"),
+            ("Pink", "#DB2777"),
+            ("Purple", "#7C3AED"),
+            ("Orange", "#D97706"),
+            ("Slate", "0F172A"),
+        ]
+        let currentColor = ConfigManager.shared.config.style.backgroundColor.uppercased()
+        for (name, hex) in colors {
+            let item = NSMenuItem(title: name, action: #selector(selectColor(_:)), keyEquivalent: "")
+            item.representedObject = hex
+            item.state = currentColor == hex.uppercased() ? .on : .off
+            submenu.addItem(item)
+        }
+        return submenu
+    }
+
+    @objc private func selectTheme(_ sender: NSMenuItem) {
+        let themeName = sender.representedObject as? String
+        ConfigManager.shared.setTheme(themeName)
+        statusItem.menu = buildMenu()
+    }
+
+    @objc private func selectColor(_ sender: NSMenuItem) {
+        guard let hex = sender.representedObject as? String else { return }
+        ConfigManager.shared.setColor(hex)
+        statusItem.menu = buildMenu()
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        menu.item(at: 0)?.state = isEnabled ? .on : .off
+
+        if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
+            themeItem.submenu = buildThemeMenu()
+        }
+
+        let hasTheme = ConfigManager.shared.config.theme != nil
+        if hasTheme {
+            if let colorItem = menu.items.first(where: { $0.title == "Color" }) {
+                menu.removeItem(colorItem)
+            }
+        } else {
+            if menu.items.first(where: { $0.title == "Color" }) == nil {
+                let colorItem = NSMenuItem(title: "Color", action: nil, keyEquivalent: "")
+                colorItem.submenu = buildColorMenu()
+                if let themeIndex = menu.items.firstIndex(where: { $0.title == "Theme" }) {
+                    menu.insertItem(colorItem, at: themeIndex + 1)
+                }
+            }
+        }
     }
 
     @objc private func toggleEnabled() {
