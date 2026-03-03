@@ -37,7 +37,7 @@ struct BehaviorConfig: Codable, Sendable {
     var fadeOutDuration: Double = 0.5
     var fadeInDuration: Double = 0.2
     var maxLines: Int = 5
-    var charLimit: Int = 200
+    var charLimit: Int = 30
 }
 
 struct AppConfig: Codable, Sendable {
