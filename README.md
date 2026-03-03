@@ -42,46 +42,100 @@ Without a local signing certificate, macOS invalidates Accessibility permission 
 
 The build script will automatically detect and use this certificate. This is entirely local — the certificate never leaves your machine.
 
-## Configuration
+## Themes
 
-Edit `~/.config/cursor-subtitles/config.json` to customize:
+Switch themes from the menubar icon → **Theme**. Built-in themes:
 
-- `hotkey` — trigger shortcut (default: `cmd+/`)
-- `style.backgroundColor` — pill color (hex, default: `#1F6BE8`)
-- `style.textColor` — text color (hex, default: `#FFFFFF`)
-- `style.placeholderText` — placeholder (default: `Say something`)
-- `style.fontSize` — font size (default: `14`)
-- `style.fontFamily` — font name or `system` (default: `system`)
-- `style.cornerRadius` — pill roundness (default: `20`)
-- `style.pointerCorner` — sharp top-left corner pointing at cursor (default: `true`)
-- `style.paddingH` — horizontal padding (default: `16`)
-- `style.paddingV` — vertical padding (default: `8`)
-- `style.maxWidth` — max pill width (default: `300`)
-- `style.cursorOffset.x` — horizontal offset from cursor (default: `12`)
-- `style.cursorOffset.y` — vertical offset from cursor (default: `12`)
-- `style.borderColor` — border color (hex, default: `#FFFFFF`)
-- `style.borderOpacity` — border opacity 0–1 (default: `0.2`)
-- `style.borderWidth` — border width (default: `2`)
-- `style.shadowColor` — shadow color (hex, default: `#1049A7`)
-- `style.shadowOpacity` — shadow opacity 0–1 (default: `0.1`)
-- `style.shadowRadius` — shadow blur (default: `3`)
-- `style.shadowX` — shadow horizontal offset (default: `0`)
-- `style.shadowY` — shadow vertical offset (default: `5`)
-- `behavior.idleTimeout` — seconds before fade (default: `10`)
-- `behavior.fadeOutDuration` — fade out duration in seconds (default: `0.5`)
-- `behavior.fadeInDuration` — fade in duration in seconds (default: `0.2`)
-- `behavior.maxLines` — max line count (default: `5`)
-- `behavior.charLimit` — max characters per line (default: `200`)
+- **Default** — solid blue pill (no theme selected)
+- **Liquid Glass** — Apple's native glass effect (macOS Tahoe/26+)
+- **Frosted Glass** — translucent frosted blur (macOS 13+)
+- **Modern** — gradient background
+- **Terminal** — dark, square corners, monospace font
 
-Changes apply instantly — no restart needed.
+When no theme is selected, a **Color** submenu lets you quickly change the pill color from preset options.
 
-**After updating**, new config options won't appear in your existing config file. To get the latest defaults, delete the config and relaunch:
+### Custom Themes
 
-```bash
-rm ~/.config/cursor-subtitles/config.json
+Drop a `.json` file in `~/.config/cursor-subtitles/themes/` and it appears in the Theme menu. A theme file sets any style or behavior options:
+
+```json
+{
+  "name": "My Theme",
+  "style": {
+    "backgroundColor": "#FF6600",
+    "textColor": "#FFFFFF",
+    "cornerRadius": 8
+  }
+}
 ```
 
-The app will regenerate it with all current options. If you have custom values you want to keep, note them down first.
+See the built-in themes in that directory for more examples.
+
+## Configuration
+
+Edit `~/.config/cursor-subtitles/config.json` to customize. The config file only needs to contain the values you want to change — everything else uses defaults (or theme values if a theme is active).
+
+A minimal config looks like:
+
+```json
+{
+  "hotkey": "cmd/",
+  "theme": "liquid-glass"
+}
+```
+
+To override a theme's style, add specific keys under `style` or `behavior`:
+
+```json
+{
+  "hotkey": "cmd/",
+  "theme": "terminal",
+  "style": {
+    "fontSize": 18
+  }
+}
+```
+
+### All Options
+
+**Top-level:**
+- `hotkey` — trigger shortcut (default: `cmd+/`)
+- `theme` — theme name matching a file in `~/.config/cursor-subtitles/themes/` (default: none)
+
+**Style** (`style.*`):
+- `backgroundColor` — pill color, hex (default: `#1F6BE8`)
+- `backgroundOpacity` — background opacity 0–1 (default: `1.0`)
+- `backgroundGradient` — array of hex colors for linear gradient, e.g. `["#6366F1", "#EC4899"]` (default: none)
+- `vibrancy` — frosted blur material: `ultraThin`, `thin`, `regular`, `thick`, `ultraThick` (default: none)
+- `glassEffect` — Apple Liquid Glass, macOS 26+ only (default: `false`)
+- `textColor` — text color, hex (default: `#FFFFFF`)
+- `placeholderText` — placeholder text (default: `Say something`)
+- `fontSize` — font size (default: `14`)
+- `fontFamily` — font name or `system` (default: `system`)
+- `cornerRadius` — pill roundness (default: `20`)
+- `pointerCorner` — sharp top-left corner pointing at cursor (default: `true`)
+- `paddingH` — horizontal padding (default: `16`)
+- `paddingV` — vertical padding (default: `8`)
+- `maxWidth` — max pill width (default: `300`)
+- `cursorOffset.x` — horizontal offset from cursor (default: `12`)
+- `cursorOffset.y` — vertical offset from cursor (default: `12`)
+- `borderColor` — border color, hex (default: `#FFFFFF`)
+- `borderOpacity` — border opacity 0–1 (default: `0.2`)
+- `borderWidth` — border width (default: `2`)
+- `shadowColor` — shadow color, hex (default: `#000000`)
+- `shadowOpacity` — shadow opacity 0–1 (default: `0.1`)
+- `shadowRadius` — shadow blur (default: `3`)
+- `shadowX` — shadow horizontal offset (default: `0`)
+- `shadowY` — shadow vertical offset (default: `5`)
+
+**Behavior** (`behavior.*`):
+- `idleTimeout` — seconds before fade (default: `10`)
+- `fadeOutDuration` — fade out duration in seconds (default: `0.5`)
+- `fadeInDuration` — fade in duration in seconds (default: `0.2`)
+- `maxLines` — max line count (default: `5`)
+- `charLimit` — max characters per line (default: `200`)
+
+Changes apply instantly — no restart needed.
 
 ## Permissions
 
