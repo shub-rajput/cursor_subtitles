@@ -14,10 +14,13 @@ final class CursorTracker {
             guard let self = self else { return }
             MainActor.assumeIsolated {
                 let mouseLocation = NSEvent.mouseLocation
-                if let screen = NSScreen.main {
-                    let flippedY = screen.frame.height - mouseLocation.y
-                    self.viewModel.cursorPosition = NSPoint(x: mouseLocation.x, y: flippedY)
-                }
+                let screen = NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) }
+                    ?? NSScreen.main
+                guard let screen = screen else { return }
+                let localX = mouseLocation.x - screen.frame.origin.x
+                let localY = screen.frame.height - (mouseLocation.y - screen.frame.origin.y)
+                self.viewModel.cursorPosition = NSPoint(x: localX, y: localY)
+                self.viewModel.activeScreenID = ObjectIdentifier(screen)
             }
         }
     }

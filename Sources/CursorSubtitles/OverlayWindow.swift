@@ -2,10 +2,9 @@ import AppKit
 
 @MainActor
 class OverlayWindow: NSPanel {
-    init() {
-        let screenFrame = NSScreen.main?.frame ?? NSRect(x: 0, y: 0, width: 1920, height: 1080)
+    init(for screen: NSScreen) {
         super.init(
-            contentRect: screenFrame,
+            contentRect: screen.frame,
             styleMask: [.borderless, .nonactivatingPanel, .fullSizeContentView],
             backing: .buffered,
             defer: false

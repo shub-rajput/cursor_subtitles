@@ -6,6 +6,7 @@ class SubtitleViewModel: ObservableObject {
     @Published var text: String = ""
     @Published var isActive: Bool = false
     @Published var cursorPosition: NSPoint = .zero
+    @Published var activeScreenID: ObjectIdentifier?
     @Published var isVisible: Bool = false
 
     /// The previous line shown above, fading out when user starts typing on the new line
