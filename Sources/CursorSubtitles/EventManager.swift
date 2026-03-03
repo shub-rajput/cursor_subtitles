@@ -118,6 +118,34 @@ final class EventManager {
             return nil
         }
 
+        // Cmd+Down: next theme (keyCode 125)
+        if keyCode == 125 && mods.contains(.command) {
+            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
+            if isActive {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        ConfigManager.shared.cycleTheme(forward: true)
+                    }
+                }
+                return nil
+            }
+            return Unmanaged.passUnretained(event)
+        }
+
+        // Cmd+Up: previous theme (keyCode 126)
+        if keyCode == 126 && mods.contains(.command) {
+            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
+            if isActive {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated {
+                        ConfigManager.shared.cycleTheme(forward: false)
+                    }
+                }
+                return nil
+            }
+            return Unmanaged.passUnretained(event)
+        }
+
         // When pill not active, pass through
         let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
         guard isActive else { return Unmanaged.passUnretained(event) }

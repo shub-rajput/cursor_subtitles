@@ -210,6 +210,27 @@ class ConfigManager: ObservableObject {
         writeConfigDict(dict)
     }
 
+    func cycleTheme(forward: Bool) {
+        let themes = availableThemes()
+        guard !themes.isEmpty else { return }
+
+        let currentTheme = config.theme
+        let currentIndex = themes.firstIndex { $0.filename == currentTheme }
+
+        let nextIndex: Int
+        if let currentIndex = currentIndex {
+            if forward {
+                nextIndex = (currentIndex + 1) % themes.count
+            } else {
+                nextIndex = (currentIndex - 1 + themes.count) % themes.count
+            }
+        } else {
+            nextIndex = forward ? 0 : themes.count - 1
+        }
+
+        setTheme(themes[nextIndex].filename)
+    }
+
     func setColor(_ hex: String) {
         guard var dict = readConfigDict() else { return }
         var styleDict = dict["style"] as? [String: Any] ?? [:]
