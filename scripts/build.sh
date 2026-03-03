@@ -2,7 +2,15 @@
 set -e
 
 APP_NAME="CursorSubtitles"
+BUNDLE_ID="com.cursor-subtitles.app"
 BUILD_DIR=".build/release"
+
+# Quit the app if running
+if pgrep -x "$APP_NAME" > /dev/null; then
+    echo "Quitting ${APP_NAME}..."
+    killall "$APP_NAME" 2>/dev/null || true
+    sleep 1
+fi
 
 swift build -c release
 
@@ -12,7 +20,10 @@ mkdir -p "${APP_NAME}.app/Contents/MacOS"
 cp "${BUILD_DIR}/${APP_NAME}" "${APP_NAME}.app/Contents/MacOS/"
 cp "Info.plist" "${APP_NAME}.app/Contents/"
 mkdir -p "${APP_NAME}.app/Contents/Resources"
-cp Resources/* "${APP_NAME}.app/Contents/Resources/"
+cp Resources/* "${APP_NAME}.app/Contents/Resources/" 2>/dev/null || true
+if [ -d "Resources/themes" ]; then
+    cp -r Resources/themes "${APP_NAME}.app/Contents/Resources/themes"
+fi
 
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
     codesign --force --deep --sign "CursorSubtitles" --identifier "com.cursor-subtitles.app" "${APP_NAME}.app"
@@ -23,4 +34,14 @@ else
 fi
 
 echo "Built ${APP_NAME}.app"
-echo "Run with: open ${APP_NAME}.app"
+
+# Relaunch
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
+    echo "Signed build — permissions will persist."
+    open "${APP_NAME}.app"
+else
+    echo "Unsigned build — resetting Accessibility permission..."
+    tccutil reset Accessibility "$BUNDLE_ID" 2>/dev/null || true
+    open "${APP_NAME}.app"
+    echo "Grant Accessibility permission when prompted."
+fi
