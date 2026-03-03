@@ -25,8 +25,8 @@ struct PillContainerView: View {
             }
         }
         .animation(viewModel.isVisible && isActiveScreen
-            ? .easeInOut(duration: fadeIn)
-            : .easeInOut(duration: fadeOut),
+            ? .smooth(duration: fadeIn)
+            : .easeOut(duration: fadeOut),
             value: viewModel.isVisible && isActiveScreen
         )
     }
