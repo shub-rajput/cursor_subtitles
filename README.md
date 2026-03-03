@@ -4,6 +4,18 @@ A lightweight macOS menubar app that displays cursor chat bubbles — perfect fo
 
 ## Install
 
+### Homebrew (Recommended)
+
+```bash
+brew install --cask shub-rajput/cursor-subtitles/cursor-subtitles
+```
+
+### Manual
+
+Download the latest `.zip` from [Releases](https://github.com/shub-rajput/cursor_subtitles/releases), unzip, and move `CursorSubtitles.app` to `/Applications`.
+
+### Build from Source
+
 ```bash
 git clone https://github.com/shub-rajput/cursor_subtitles.git
 cd cursor_subtitles
@@ -21,6 +33,14 @@ open CursorSubtitles.app
 5. The pill follows your cursor and fades after 10s of inactivity
 
 ## Updating
+
+### Homebrew
+
+```bash
+brew upgrade --cask cursor-subtitles
+```
+
+### Build from Source
 
 ```bash
 ./scripts/update.sh
