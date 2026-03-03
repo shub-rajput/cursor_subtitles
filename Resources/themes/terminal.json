@@ -1,0 +1,14 @@
+{
+  "name": "Terminal",
+  "style": {
+    "backgroundColor": "#1E1E1E",
+    "textColor": "#00FF00",
+    "fontFamily": "Menlo",
+    "cornerRadius": 0,
+    "pointerCorner": false,
+    "borderColor": "#00FF00",
+    "borderOpacity": 0.3,
+    "borderWidth": 1,
+    "shadowOpacity": 0
+  }
+}

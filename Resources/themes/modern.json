@@ -1,0 +1,14 @@
+{
+  "name": "Modern",
+  "style": {
+    "backgroundGradient": ["#6366F1", "#EC4899"],
+    "textColor": "#FFFFFF",
+    "borderColor": "#FFFFFF",
+    "borderOpacity": 0.15,
+    "borderWidth": 1,
+    "shadowColor": "#6366F1",
+    "shadowOpacity": 0.25,
+    "shadowRadius": 12,
+    "shadowY": 6
+  }
+}

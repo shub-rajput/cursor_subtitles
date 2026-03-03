@@ -1,0 +1,16 @@
+{
+  "name": "Liquid Glass",
+  "style": {
+    "glassEffect": true,
+    "backgroundColor": "#FFFFFF",
+    "backgroundOpacity": 0.12,
+    "textColor": "#FFFFFF",
+    "borderColor": "#FFFFFF",
+    "borderOpacity": 0.35,
+    "borderWidth": 1,
+    "shadowColor": "#000000",
+    "shadowOpacity": 0.15,
+    "shadowRadius": 8,
+    "shadowY": 4
+  }
+}
