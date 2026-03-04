@@ -15,9 +15,23 @@ A lightweight macOS menubar app that displays text bubbles below the cursor when
 brew install --cask shub-rajput/cursor-subtitles/cursor-subtitles
 ```
 
+### Install Script
+
+Paste this in Terminal, downloads the latest release, removes the macOS quarantine flag, and moves the app to `/Applications`:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shub-rajput/cursor_subtitles/main/scripts/install.sh | bash
+```
+
 ### Manual
 
 Download the latest `.zip` from [Releases](https://github.com/shub-rajput/cursor_subtitles/releases), unzip, and move `CursorSubtitles.app` to `/Applications`.
+
+> [!NOTE]
+> **Gatekeeper warning?** macOS blocks apps from unidentified developers by default. Fix it with one of these:
+> - **Right-click method (easiest):** Right-click `CursorSubtitles.app` → **Open** → click **Open** in the dialog. You only need to do this once.
+> - **Terminal:** `xattr -cr /Applications/CursorSubtitles.app`
+> - **System Settings:** System Settings → Privacy & Security → scroll down → click **Open Anyway**
 
 ### Build from Source
 
@@ -58,6 +72,14 @@ While the pill is active:
 ```bash
 brew upgrade --cask cursor-subtitles
 ```
+
+### Install Script
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/shub-rajput/cursor_subtitles/main/scripts/install.sh | bash
+```
+
+Quits the running app, installs the latest release, and relaunches.
 
 ### Build from Source
 
