@@ -57,6 +57,25 @@ class SubtitleViewModel: ObservableObject {
         onNewLine = false
     }
 
+    func showOnboarding() {
+        // Ensure activeScreenID is set so the pill renders on the correct screen
+        if activeScreenID == nil,
+           let screen = NSScreen.screens.first(where: { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) })
+            ?? NSScreen.main {
+            activeScreenID = ObjectIdentifier(screen)
+        }
+        previousLine = "Hey! Press ⌘/ to enable CursorSubtitles"
+        showPreviousLine = true
+        text = "Check the menubar icon for more settings!"
+        onNewLine = false
+        isActive = true
+        isVisible = true
+        idleTimer?.invalidate()
+        idleTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { [weak self] _ in
+            DispatchQueue.main.async { self?.dismiss() }
+        }
+    }
+
     func handleCharacter(_ char: String) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
