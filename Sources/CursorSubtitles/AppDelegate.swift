@@ -51,6 +51,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit Config...", action: #selector(openConfig), keyEquivalent: ","))
+        menu.addItem(NSMenuItem(title: "Reset Config", action: #selector(resetConfig), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         return menu
@@ -132,6 +133,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             overlayController.hide()
             statusItem.menu?.item(at: 0)?.state = .off
         }
+    }
+
+    @objc private func resetConfig() {
+        ConfigManager.shared.resetStyleOverrides()
+        statusItem.menu = buildMenu()
     }
 
     @objc private func openConfig() {

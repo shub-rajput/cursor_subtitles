@@ -197,27 +197,18 @@ class ConfigManager: ObservableObject {
 
     func setTheme(_ themeName: String?) {
         guard var dict = readConfigDict() else { return }
-        // Preserve user font size override across theme changes
-        let existingStyle = dict["style"] as? [String: Any]
-        let savedFontSize = existingStyle?["fontSize"]
-
         if let themeName {
             dict["theme"] = themeName
-            // Remove style and behavior overrides so the theme takes full effect.
-            // Users can add specific overrides back manually in config.json.
-            dict.removeValue(forKey: "style")
-            dict.removeValue(forKey: "behavior")
         } else {
             dict.removeValue(forKey: "theme")
         }
+        writeConfigDict(dict)
+    }
 
-        // Restore font size if user had set one
-        if let savedFontSize {
-            var styleDict = dict["style"] as? [String: Any] ?? [:]
-            styleDict["fontSize"] = savedFontSize
-            dict["style"] = styleDict
-        }
-
+    func resetStyleOverrides() {
+        guard var dict = readConfigDict() else { return }
+        dict.removeValue(forKey: "style")
+        dict.removeValue(forKey: "behavior")
         writeConfigDict(dict)
     }
 
