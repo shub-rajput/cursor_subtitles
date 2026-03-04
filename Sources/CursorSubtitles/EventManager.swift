@@ -109,8 +109,11 @@ final class EventManager {
         let keyCode = nsEvent.keyCode
         let characters = nsEvent.characters
 
-        // Cmd+/ hotkey (keyCode 44)
-        if keyCode == 44 && mods.contains(.command) {
+        // Configurable hotkey
+        let (hotkeyMods, hotkeyCode) = MainActor.assumeIsolated {
+            Self.parseHotkey(ConfigManager.shared.config.hotkey)
+        }
+        if keyCode == hotkeyCode && mods == hotkeyMods {
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     if self.viewModel.isActive { self.viewModel.dismiss() }
@@ -198,5 +201,47 @@ final class EventManager {
         permissionTimer?.invalidate()
         permissionTimer = nil
         tearDownEventTap()
+    }
+
+    // MARK: - Hotkey parsing
+
+    private static let keyCodeMap: [String: UInt16] = [
+        "/": 44, ".": 47, ",": 43, ";": 41, "'": 39, "[": 33, "]": 30,
+        "\\": 42, "-": 27, "=": 24, "`": 50,
+        "a": 0, "b": 11, "c": 8, "d": 2, "e": 14, "f": 3, "g": 5,
+        "h": 4, "i": 34, "j": 38, "k": 40, "l": 37, "m": 46, "n": 45,
+        "o": 31, "p": 35, "q": 12, "r": 15, "s": 1, "t": 17, "u": 32,
+        "v": 9, "w": 13, "x": 7, "y": 16, "z": 6,
+        "0": 29, "1": 18, "2": 19, "3": 20, "4": 21, "5": 23,
+        "6": 22, "7": 26, "8": 28, "9": 25,
+        "space": 49, "return": 36, "tab": 48, "escape": 53,
+        "delete": 51, "f1": 122, "f2": 120, "f3": 99, "f4": 118,
+        "f5": 96, "f6": 97, "f7": 98, "f8": 100, "f9": 101,
+        "f10": 109, "f11": 103, "f12": 111,
+    ]
+
+    /// Parses a hotkey string like "cmd+/" or "cmd+shift+k" into modifier flags and a key code.
+    static func parseHotkey(_ hotkey: String) -> (NSEvent.ModifierFlags, UInt16) {
+        let parts = hotkey.lowercased().split(separator: "+").map(String.init)
+        var mods: NSEvent.ModifierFlags = []
+        var code: UInt16 = 44 // default: /
+
+        for part in parts {
+            switch part {
+            case "cmd", "command": mods.insert(.command)
+            case "shift": mods.insert(.shift)
+            case "alt", "option", "opt": mods.insert(.option)
+            case "ctrl", "control": mods.insert(.control)
+            default:
+                if let mapped = keyCodeMap[part] {
+                    code = mapped
+                }
+            }
+        }
+
+        // Default to cmd if no modifiers specified
+        if mods.isEmpty { mods = .command }
+
+        return (mods, code)
     }
 }
