@@ -66,7 +66,7 @@ class SubtitleViewModel: ObservableObject {
         }
         previousLine = "Hey! Press ⌘/ to enable CursorSubtitles"
         showPreviousLine = true
-        text = "Check the menubar icon for more settings!"
+        text = "Check the menubar for more settings!"
         onNewLine = false
         isActive = true
         isVisible = true
