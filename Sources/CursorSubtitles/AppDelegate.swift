@@ -48,7 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
 
         let hotkey = ConfigManager.shared.config.hotkey
-        let hint = NSMenuItem(title: "\(hotkey) to show subtitle", action: nil, keyEquivalent: "")
+        let hint = NSMenuItem(title: "\(hotkey) to start typing", action: nil, keyEquivalent: "")
         hint.isEnabled = false
         menu.addItem(hint)
         menu.addItem(NSMenuItem.separator())
@@ -66,6 +66,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(NSMenuItem(title: "Edit Config...", action: #selector(openConfig), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "Reset Config", action: #selector(resetConfig), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "About", action: #selector(showAbout), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         return menu
     }
@@ -165,6 +166,24 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             FileManager.default.homeDirectoryForCurrentUser
                 .appendingPathComponent(".config/cursor-subtitles/config.json")
         )
+    }
+
+    @objc private func showAbout() {
+        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
+        let alert = NSAlert()
+        alert.messageText = "Cursor Subtitles"
+        alert.informativeText = "Version \(version)\n\nReal-time on-screen subtitles near your cursor.\n\nCopyright © 2026 Shubhang Haresh Rajput"
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Support ♥")
+        alert.addButton(withTitle: "GitHub")
+        NSApp.activate(ignoringOtherApps: true)
+        let response = alert.runModal()
+        if response == .alertSecondButtonReturn {
+            NSWorkspace.shared.open(URL(string: "https://ko-fi.com/shubhangrajput")!)
+        } else if response == .alertThirdButtonReturn {
+            NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/cursor_subtitles")!)
+        }
     }
 
     @objc private func quitApp() {
