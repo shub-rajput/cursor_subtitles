@@ -175,7 +175,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.informativeText = "Version \(version)\n\nReal-time on-screen subtitles near your cursor.\n\nCopyright © 2026 Shubhang Haresh Rajput"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Support ♥")
+        alert.addButton(withTitle: "Support the App ♥")
         alert.addButton(withTitle: "GitHub")
         NSApp.activate(ignoringOtherApps: true)
         let response = alert.runModal()
