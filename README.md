@@ -1,6 +1,6 @@
 # Cursor Subtitles
 
-A lightweight macOS menubar app that displays cursor chat bubbles — perfect for real-time subtitles while screen recording. Requires **macOS 14.0+** (Sonoma or later).
+A lightweight macOS menubar app that displays text bubbles below the cursor when enabled. Perfect for real-time context while screen recording. Requires **macOS 14.0+** (Sonoma or later).
 
 ## Install
 
@@ -31,6 +31,20 @@ open CursorSubtitles.app
 3. Press **Enter** for a new line
 4. Press **Escape** or click anywhere to dismiss
 5. The pill follows your cursor and fades after 10s of inactivity
+
+### Keyboard Shortcuts
+
+While the pill is active:
+
+| Shortcut | Action |
+|----------|--------|
+| **Cmd+/** | Toggle pill on/off |
+| **Cmd+Up** | Previous theme |
+| **Cmd+Down** | Next theme |
+| **Cmd+Right** | Increase font size (+2pt) |
+| **Cmd+Left** | Decrease font size (-2pt) |
+| **Escape** | Dismiss pill |
+| **Enter** | New line |
 
 ## Updating
 
@@ -66,15 +80,16 @@ The build script will automatically detect and use this certificate. This is ent
 
 Switch themes from the menubar icon → **Theme**. Built-in themes:
 
-- **Default** — solid blue pill (no theme selected)
-- **Liquid Glass** — Apple's native glass effect (macOS Tahoe/26+)
+- **Default** — solid blue pill with many color options to choose from (no theme selected)
+- **Bold** — bold yellow with hard shadows and bold text
+- **Candy** — pastel gradient with typewriter font
 - **Frosted Glass** — translucent frosted blur
-- **Modern** — gradient background
-- **Terminal** — dark, square corners, monospace font
-- **Blocky** — bold yellow with hard shadow
+- **Liquid Glass** — Apple's native glass effect (macOS Tahoe/26+)
+- **Midnight** — dark and minimal with charcoal gradient 
 - **Notepad** — warm parchment with Georgia serif
+- **Terminal** — dark, green text, monospace font
 
-When no theme is selected, a **Color** submenu lets you quickly change the pill color from preset options.
+When selecting Default theme you can quickly change the pill color from preset options.
 
 ### Custom Themes
 
