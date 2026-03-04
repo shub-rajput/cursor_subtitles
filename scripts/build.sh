@@ -4,6 +4,9 @@ set -e
 APP_NAME="CursorSubtitles"
 BUNDLE_ID="com.cursor-subtitles.app"
 BUILD_DIR=".build/release"
+VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null || echo "unknown")
+
+echo "Building ${APP_NAME} v${VERSION}..."
 
 # Quit the app if running
 if pgrep -x "$APP_NAME" > /dev/null; then
@@ -33,7 +36,7 @@ else
     echo "See README for how to create a local signing certificate."
 fi
 
-echo "Built ${APP_NAME}.app"
+echo "Built ${APP_NAME}.app v${VERSION}"
 
 # Relaunch
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
