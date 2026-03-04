@@ -49,12 +49,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         themeItem.submenu = buildThemeMenu()
         menu.addItem(themeItem)
 
-        if ConfigManager.shared.config.theme == nil {
-            let colorItem = NSMenuItem(title: "Color", action: nil, keyEquivalent: "")
-            colorItem.submenu = buildColorMenu()
-            menu.addItem(colorItem)
-        }
-
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Edit Config...", action: #selector(openConfig), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
@@ -66,9 +60,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let submenu = NSMenu()
         let currentTheme = ConfigManager.shared.config.theme
 
-        let defaultItem = NSMenuItem(title: "Default", action: #selector(selectTheme(_:)), keyEquivalent: "")
-        defaultItem.representedObject = nil as String?
+        let defaultItem = NSMenuItem(title: "Default", action: nil, keyEquivalent: "")
         defaultItem.state = currentTheme == nil ? .on : .off
+        defaultItem.submenu = buildColorMenu()
         submenu.addItem(defaultItem)
         submenu.addItem(NSMenuItem.separator())
 
@@ -113,6 +107,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     @objc private func selectColor(_ sender: NSMenuItem) {
         guard let hex = sender.representedObject as? String else { return }
+        ConfigManager.shared.setTheme(nil)
         ConfigManager.shared.setColor(hex)
         statusItem.menu = buildMenu()
     }
@@ -122,21 +117,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
-        }
-
-        let hasTheme = ConfigManager.shared.config.theme != nil
-        if hasTheme {
-            if let colorItem = menu.items.first(where: { $0.title == "Color" }) {
-                menu.removeItem(colorItem)
-            }
-        } else {
-            if menu.items.first(where: { $0.title == "Color" }) == nil {
-                let colorItem = NSMenuItem(title: "Color", action: nil, keyEquivalent: "")
-                colorItem.submenu = buildColorMenu()
-                if let themeIndex = menu.items.firstIndex(where: { $0.title == "Theme" }) {
-                    menu.insertItem(colorItem, at: themeIndex + 1)
-                }
-            }
         }
     }
 
