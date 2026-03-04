@@ -18,6 +18,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         overlayController.show()
         eventManager.start()
         cursorTracker.start()
+
+        if !UserDefaults.standard.bool(forKey: "hasLaunchedBefore") {
+            UserDefaults.standard.set(true, forKey: "hasLaunchedBefore")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                self?.viewModel.showOnboarding()
+            }
+        }
     }
 
     private func setupMenubar() {
@@ -39,6 +46,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
         menu.delegate = self
+
+        let hotkey = ConfigManager.shared.config.hotkey
+        let hint = NSMenuItem(title: "\(hotkey) to show subtitle", action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        menu.addItem(hint)
+        menu.addItem(NSMenuItem.separator())
 
         let toggleItem = NSMenuItem(title: "Enabled", action: #selector(toggleEnabled), keyEquivalent: "")
         toggleItem.state = isEnabled ? .on : .off
@@ -74,6 +87,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             item.state = currentTheme == theme.filename ? .on : .off
             submenu.addItem(item)
         }
+
+        submenu.addItem(NSMenuItem.separator())
+        let hint = NSMenuItem(title: "⌘↑ / ⌘↓ to cycle themes", action: nil, keyEquivalent: "")
+        hint.isEnabled = false
+        submenu.addItem(hint)
 
         return submenu
     }
@@ -114,7 +132,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     }
 
     func menuWillOpen(_ menu: NSMenu) {
-        menu.item(at: 0)?.state = isEnabled ? .on : .off
+        let hotkey = ConfigManager.shared.config.hotkey
+        menu.items.first(where: { $0.title.hasSuffix("to show subtitle") })?.title = "\(hotkey) to show subtitle"
+        menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
