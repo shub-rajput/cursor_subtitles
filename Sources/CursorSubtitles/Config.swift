@@ -122,8 +122,7 @@ class ConfigManager: ObservableObject {
             userDict = userObj
         } else {
             saveDefaultConfig()
-            config = AppConfig()
-            return
+            // Don't return early — continue loading so defaults are applied properly
         }
 
         if let themeName = userDict["theme"] as? String {
@@ -138,6 +137,16 @@ class ConfigManager: ObservableObject {
 
         merged = ConfigManager.deepMerge(merged, userDict)
 
+        // Apply colorPreset only if the user hasn't manually set style.backgroundColor
+        if let preset = userDict["colorPreset"] as? String {
+            let userHasManualBgColor = (userDict["style"] as? [String: Any])?["backgroundColor"] != nil
+            if !userHasManualBgColor {
+                var styleDict = merged["style"] as? [String: Any] ?? [:]
+                styleDict["backgroundColor"] = preset
+                merged["style"] = styleDict
+            }
+        }
+
         do {
             let mergedData = try JSONSerialization.data(withJSONObject: merged)
             config = try JSONDecoder().decode(AppConfig.self, from: mergedData)
@@ -149,9 +158,10 @@ class ConfigManager: ObservableObject {
 
     private func saveDefaultConfig() {
         do {
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            let data = try encoder.encode(config)
+            // Write minimal config so themes and color presets can take effect
+            // (a full dump of defaults would override all theme values during merge)
+            let minimal: [String: Any] = ["hotkey": "cmd+/"]
+            let data = try JSONSerialization.data(withJSONObject: minimal, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
             try data.write(to: configURL)
         } catch {
             print("Failed to save default config: \(error)")
@@ -202,6 +212,7 @@ class ConfigManager: ObservableObject {
         } else {
             dict.removeValue(forKey: "theme")
         }
+        dict.removeValue(forKey: "colorPreset")
         writeConfigDict(dict)
     }
 
@@ -209,6 +220,7 @@ class ConfigManager: ObservableObject {
         guard var dict = readConfigDict() else { return }
         dict.removeValue(forKey: "style")
         dict.removeValue(forKey: "behavior")
+        dict.removeValue(forKey: "colorPreset")
         writeConfigDict(dict)
     }
 
@@ -256,9 +268,7 @@ class ConfigManager: ObservableObject {
 
     func setColor(_ hex: String) {
         guard var dict = readConfigDict() else { return }
-        var styleDict = dict["style"] as? [String: Any] ?? [:]
-        styleDict["backgroundColor"] = hex
-        dict["style"] = styleDict
+        dict["colorPreset"] = hex
         writeConfigDict(dict)
     }
 
@@ -271,7 +281,7 @@ class ConfigManager: ObservableObject {
 
     private func writeConfigDict(_ dict: [String: Any]) {
         do {
-            let data = try JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .sortedKeys])
+            let data = try JSONSerialization.data(withJSONObject: dict, options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes])
             try data.write(to: configURL)
         } catch {
             print("Failed to write config: \(error)")
