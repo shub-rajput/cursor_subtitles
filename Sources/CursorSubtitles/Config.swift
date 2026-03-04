@@ -11,10 +11,10 @@ struct StyleConfig: Codable, Sendable {
     var placeholderText: String = "Say something"
     var fontSize: CGFloat = 14
     var fontFamily: String = "system"
-    var fontWeight: String = "medium"
-    var cornerRadius: CGFloat = 20
+    var fontWeight: String = "regular"
+    var cornerRadius: CGFloat = 16
     var pointerCorner: Bool = true
-    var paddingH: CGFloat = 16
+    var paddingH: CGFloat = 12
     var paddingV: CGFloat = 8
     var maxWidth: CGFloat = 300
     var cursorOffset: CursorOffset = CursorOffset()
