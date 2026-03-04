@@ -70,7 +70,7 @@ While the pill is active:
 ### Homebrew
 
 ```bash
-brew upgrade --cask cursor-subtitles
+brew update && brew upgrade --cask cursor-subtitles
 ```
 
 ### Install Script
