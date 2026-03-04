@@ -134,6 +134,13 @@ struct PillView: View {
             tint: bgColor.opacity(style.backgroundOpacity),
             shape: pillShape
         ))
+        .shadow(
+            color: (Color(hex: style.shadowColor) ?? .black)
+                .opacity(style.shadowOpacity),
+            radius: style.shadowRadius,
+            x: style.shadowX,
+            y: style.shadowY
+        )
         .overlay(
             pillShape
                 .strokeBorder(
@@ -141,13 +148,6 @@ struct PillView: View {
                         .opacity(style.borderOpacity),
                     lineWidth: style.borderWidth
                 )
-        )
-        .shadow(
-            color: (Color(hex: style.shadowColor) ?? .black)
-                .opacity(style.shadowOpacity),
-            radius: style.shadowRadius,
-            x: style.shadowX,
-            y: style.shadowY
         )
         .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
     }
