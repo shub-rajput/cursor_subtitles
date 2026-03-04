@@ -1,8 +1,8 @@
 {
   "name": "Frosted Glass",
   "style": {
-    "backgroundColor": "#FFFFFF",
-    "backgroundOpacity": 0.12,
+    "backgroundColor": "#000000",
+    "backgroundOpacity": 0.2,
     "vibrancy": "ultraThin",
     "textColor": "#FFFFFF",
     "borderColor": "#FFFFFF",

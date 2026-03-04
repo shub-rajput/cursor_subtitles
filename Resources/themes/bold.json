@@ -1,18 +1,18 @@
 {
-  "name": "Blocky",
+  "name": "bold",
   "style": {
     "backgroundColor": "#FFD60A",
     "textColor": "#000000",
-    "fontFamily": "system",
-    "fontWeight": "bold",
+    "fontFamily": "Arial Rounded MT Bold",
     "cornerRadius": 4,
+    "paddingH": 8,
     "pointerCorner": false,
     "borderColor": "#000000",
-    "borderOpacity": 0,
+    "borderOpacity": 1,
     "shadowColor": "#000000",
     "shadowOpacity": 1,
     "shadowRadius": 0.1,
-    "shadowX": 4,
-    "shadowY": 4
+    "shadowX": 5,
+    "shadowY": 5
   }
 }

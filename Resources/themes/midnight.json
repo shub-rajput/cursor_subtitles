@@ -1,0 +1,14 @@
+{
+  "name": "Midnight",
+  "style": {
+    "backgroundGradient": ["#262628", "#06090E"],
+    "textColor": "#FFFFFF",
+    "borderColor": "#FFFFFF",
+    "borderOpacity": 0.12,
+    "borderWidth": 1.5,
+    "shadowColor": "#000000",
+    "shadowOpacity": 0.16,
+    "shadowRadius": 8,
+    "shadowY": 6
+  }
+}

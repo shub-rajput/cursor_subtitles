@@ -1,0 +1,16 @@
+{
+    "name": "Candy",
+    "style": {    
+        "backgroundGradient": ["#E1B8AC","DC96C2","#98C8DB"],
+        "fontFamily": "American Typewriter",
+        "textColor": "#FFFFFF",
+        "borderColor": "#FFFFFF",
+        "borderOpacity": 0.2,
+        "borderWidth": 1,
+        "shadowColor": "#7C0046",
+        "shadowOpacity": 0.16,
+        "shadowRadius": 12,
+        "shadowY": 6
+    }
+
+}

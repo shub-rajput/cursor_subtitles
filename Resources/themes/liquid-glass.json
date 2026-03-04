@@ -3,7 +3,7 @@
   "style": {
     "glassEffect": true,
     "backgroundColor": "#000000",
-    "backgroundOpacity": 0.12,
+    "backgroundOpacity": 1,
     "textColor": "#FFFFFF",
     "borderColor": "#FFFFFF",
     "borderOpacity": 0.35,
