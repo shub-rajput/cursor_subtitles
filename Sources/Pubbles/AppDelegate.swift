@@ -56,11 +56,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let toggleItem = NSMenuItem(title: "Enabled", action: #selector(toggleEnabled), keyEquivalent: "")
         toggleItem.state = isEnabled ? .on : .off
         menu.addItem(toggleItem)
-        menu.addItem(NSMenuItem.separator())
 
-        let drawingItem = NSMenuItem(title: "Drawing Mode", action: #selector(toggleDrawing), keyEquivalent: "d")
-        drawingItem.keyEquivalentModifierMask = .command
-        drawingItem.state = viewModel.drawingModeEnabled ? .on : .off
+        let drawingItem = NSMenuItem(title: "Drawing", action: #selector(toggleDrawingAllowed), keyEquivalent: "")
+        drawingItem.state = viewModel.drawingAllowed ? .on : .off
         menu.addItem(drawingItem)
         menu.addItem(NSMenuItem.separator())
 
@@ -141,16 +139,18 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let hotkey = ConfigManager.shared.config.hotkey
         menu.items.first(where: { $0.title.hasSuffix("to start typing") })?.title = "\(hotkey) to start typing"
         menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
-        menu.items.first(where: { $0.title == "Drawing Mode" })?.state = viewModel.drawingModeEnabled ? .on : .off
+        menu.items.first(where: { $0.title == "Drawing" })?.state = viewModel.drawingAllowed ? .on : .off
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
         }
     }
 
-    @objc private func toggleDrawing() {
-        viewModel.drawingModeEnabled.toggle()
-        viewModel.showDrawingModeHint(enabled: viewModel.drawingModeEnabled)
+    @objc private func toggleDrawingAllowed() {
+        viewModel.drawingAllowed.toggle()
+        if !viewModel.drawingAllowed {
+            viewModel.drawingModeEnabled = false
+        }
     }
 
     @objc private func toggleEnabled() {
@@ -212,9 +212,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Esc — Dismiss pill
             Enter — New line
             Backspace — Delete character
-            ⌘D — Toggle drawing mode
 
             While pill is active:
+            Hold ⌘ + drag — Draw on screen
             ⌘↑ / ⌘↓ — Cycle themes
             ⌘→ / ⌘← — Scale pill up / down
 
