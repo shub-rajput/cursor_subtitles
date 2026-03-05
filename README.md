@@ -70,8 +70,8 @@ While the pill is active:
 | **Cmd+/** (editable)| Toggle pill on/off |
 | **Cmd+Up** | Previous theme |
 | **Cmd+Down** | Next theme |
-| **Cmd+Right** | Increase font size (+2pt) |
-| **Cmd+Left** | Decrease font size (-2pt) |
+| **Cmd+Right** | Scale pill up |
+| **Cmd+Left** | Scale pill down |
 | **Cmd+D** | Toggle drawing mode |
 | **Escape** | Dismiss pill |
 | **Enter** | New line |
@@ -186,6 +186,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `textColor` — text color, hex (default: `#FFFFFF`)
 - `placeholderText` — placeholder text (default: `Say something`)
 - `fontSize` — font size (default: `14`)
+- `pillScale` — overall pill scale, presets: `0.8`, `1.0`, `1.3`, `1.6`, `2.0` (default: `1.0`)
 - `fontFamily` — font name or `system` (default: `system`)
 - `fontWeight` — font weight: `ultraLight`, `thin`, `light`, `regular`, `medium`, `semibold`, `bold`, `heavy`, `black` (default: `medium`)
 - `cornerRadius` — pill roundness (default: `20`)
