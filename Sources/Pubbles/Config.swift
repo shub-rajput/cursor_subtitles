@@ -70,6 +70,8 @@ class ConfigManager: ObservableObject {
     }()
 
     private var fileMonitor: DispatchSourceFileSystemObject?
+    private var themeMonitor: DispatchSourceFileSystemObject?
+    private var watchedTheme: String?
 
     init() {
         seedBuiltInThemes()
@@ -157,6 +159,8 @@ class ConfigManager: ObservableObject {
             print("Failed to load config: \(error). Using defaults.")
             config = AppConfig()
         }
+
+        watchThemeFile()
     }
 
     private func saveDefaultConfig() {
@@ -188,6 +192,34 @@ class ConfigManager: ObservableObject {
             close(fd)
         }
         fileMonitor?.resume()
+    }
+
+    private func watchThemeFile() {
+        let currentTheme = config.theme
+        guard currentTheme != watchedTheme else { return }
+        watchedTheme = currentTheme
+
+        themeMonitor?.cancel()
+        themeMonitor = nil
+
+        guard let themeName = currentTheme else { return }
+        let themeFile = themesURL.appendingPathComponent("\(themeName).json")
+        let fd = open(themeFile.path, O_EVTONLY)
+        guard fd >= 0 else { return }
+        themeMonitor = DispatchSource.makeFileSystemObjectSource(
+            fileDescriptor: fd,
+            eventMask: .write,
+            queue: .main
+        )
+        themeMonitor?.setEventHandler { [weak self] in
+            MainActor.assumeIsolated {
+                self?.loadConfig()
+            }
+        }
+        themeMonitor?.setCancelHandler {
+            close(fd)
+        }
+        themeMonitor?.resume()
     }
 
     func availableThemes() -> [(name: String, filename: String)] {
