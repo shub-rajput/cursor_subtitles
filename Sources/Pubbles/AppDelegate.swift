@@ -58,6 +58,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(toggleItem)
         menu.addItem(NSMenuItem.separator())
 
+        let drawingItem = NSMenuItem(title: "Drawing Mode", action: #selector(toggleDrawing), keyEquivalent: "d")
+        drawingItem.keyEquivalentModifierMask = .command
+        drawingItem.state = viewModel.drawingModeEnabled ? .on : .off
+        menu.addItem(drawingItem)
+        menu.addItem(NSMenuItem.separator())
+
         let themeItem = NSMenuItem(title: "Theme", action: nil, keyEquivalent: "")
         themeItem.submenu = buildThemeMenu()
         menu.addItem(themeItem)
@@ -135,10 +141,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let hotkey = ConfigManager.shared.config.hotkey
         menu.items.first(where: { $0.title.hasSuffix("to start typing") })?.title = "\(hotkey) to start typing"
         menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
+        menu.items.first(where: { $0.title == "Drawing Mode" })?.state = viewModel.drawingModeEnabled ? .on : .off
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
         }
+    }
+
+    @objc private func toggleDrawing() {
+        viewModel.drawingModeEnabled.toggle()
+        viewModel.showDrawingModeHint(enabled: viewModel.drawingModeEnabled)
     }
 
     @objc private func toggleEnabled() {
@@ -200,6 +212,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Esc — Dismiss pill
             Enter — New line
             Backspace — Delete character
+            ⌘D — Toggle drawing mode
 
             While pill is active:
             ⌘↑ / ⌘↓ — Cycle themes
