@@ -15,6 +15,12 @@ class SubtitleViewModel: ObservableObject {
     /// Whether cursor is on a new blank line (Enter pressed, haven't typed yet)
     @Published var onNewLine: Bool = false
 
+    @Published var drawingModeEnabled: Bool = false
+    @Published var strokes: [[NSPoint]] = []
+    /// Not @Published — updated at ~60Hz during drag; Canvas reads it via TimelineView to avoid PillView redraws
+    var currentStroke: [NSPoint] = []
+    @Published var isDrawing: Bool = false
+
     var config: ConfigManager { ConfigManager.shared }
 
     var displayText: String {
@@ -32,7 +38,7 @@ class SubtitleViewModel: ObservableObject {
         let timeout = config.config.behavior.idleTimeout
         idleTimer = Timer.scheduledTimer(withTimeInterval: timeout, repeats: false) { [weak self] _ in
             DispatchQueue.main.async {
-                self?.isVisible = false
+                self?.dismiss()
             }
         }
     }
@@ -42,6 +48,7 @@ class SubtitleViewModel: ObservableObject {
         previousLine = ""
         showPreviousLine = false
         onNewLine = false
+        isShowingDrawingHint = false
         isActive = true
         isVisible = true
         resetIdleTimer()
@@ -51,34 +58,75 @@ class SubtitleViewModel: ObservableObject {
         idleTimer?.invalidate()
         isActive = false
         isVisible = false
-        text = ""
-        previousLine = ""
-        showPreviousLine = false
-        onNewLine = false
+        // Delay content clearing so the fade animation renders with current appearance intact
+        let fadeOut = config.config.behavior.fadeOutDuration
+        DispatchQueue.main.asyncAfter(deadline: .now() + fadeOut) { [weak self] in
+            guard let self else { return }
+            self.text = ""
+            self.previousLine = ""
+            self.showPreviousLine = false
+            self.onNewLine = false
+            self.isShowingDrawingHint = false
+            self.clearStrokes()
+        }
     }
 
-    func showOnboarding() {
-        // Ensure activeScreenID is set so the pill renders on the correct screen
+    private var isShowingDrawingHint = false
+
+    private func ensureActiveScreen() {
         if activeScreenID == nil,
            let screen = NSScreen.screens.first(where: { NSMouseInRect(NSEvent.mouseLocation, $0.frame, false) })
             ?? NSScreen.main {
             activeScreenID = ObjectIdentifier(screen)
         }
-        previousLine = "Hey! Press ⌘/ to enable Pubbles"
-        showPreviousLine = true
-        text = "Check the menubar for more settings!"
+    }
+
+    private func showTemporaryPill(text: String, timeout: TimeInterval) {
+        ensureActiveScreen()
+        self.text = text
         onNewLine = false
         isActive = true
         isVisible = true
         idleTimer?.invalidate()
-        idleTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: false) { [weak self] _ in
+        idleTimer = Timer.scheduledTimer(withTimeInterval: timeout, repeats: false) { [weak self] _ in
             DispatchQueue.main.async { self?.dismiss() }
         }
+    }
+
+    func showDrawingModeHint(enabled: Bool) {
+        let hintText = enabled ? "Drawing on" : "Drawing off"
+
+        // If pill is active, only update if currently showing a hint (don't overwrite user text)
+        if isActive {
+            guard isShowingDrawingHint else { return }
+            text = hintText
+            idleTimer?.invalidate()
+            idleTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: false) { [weak self] _ in
+                DispatchQueue.main.async { self?.dismiss() }
+            }
+            return
+        }
+
+        isShowingDrawingHint = true
+        showTemporaryPill(text: hintText, timeout: 3)
+    }
+
+    func showOnboarding() {
+        ensureActiveScreen()
+        previousLine = "Hey! Press ⌘/ to enable Pubbles"
+        showPreviousLine = true
+        showTemporaryPill(text: "Check the menubar for more settings!", timeout: 10)
     }
 
     func handleCharacter(_ char: String) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
+
+        // Clear hint text when user starts typing
+        if isShowingDrawingHint {
+            isShowingDrawingHint = false
+            text = ""
+        }
 
         // If we're on a new line and start typing, fade out the previous line
         if onNewLine && showPreviousLine {
@@ -110,5 +158,30 @@ class SubtitleViewModel: ObservableObject {
         guard isActive, !text.isEmpty else { return }
         text.removeLast()
         resetIdleTimer()
+    }
+
+    func startStroke(at point: NSPoint) {
+        guard isActive, drawingModeEnabled else { return }
+        currentStroke = [point]
+        isDrawing = true
+    }
+
+    func continueStroke(to point: NSPoint) {
+        guard isActive, drawingModeEnabled, !currentStroke.isEmpty else { return }
+        currentStroke.append(point)
+        resetIdleTimer()
+    }
+
+    func endStroke() {
+        guard !currentStroke.isEmpty else { return }
+        strokes.append(currentStroke)
+        currentStroke = []
+        isDrawing = false
+        resetIdleTimer()
+    }
+
+    func clearStrokes() {
+        strokes = []
+        currentStroke = []
     }
 }
