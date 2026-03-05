@@ -53,11 +53,12 @@ open Pubbles.app
 
 ### Drawing Mode
 
-Toggle drawing mode from the menubar or press **Cmd+D**. When enabled:
+Enable drawing from the menubar **Drawing** toggle. When enabled:
 
 - Activate the pill with **Cmd+/** as usual
-- Click and drag to draw on screen (red strokes by default)
-- Type to add text alongside your drawings
+- Hold **Cmd** and click+drag to draw on screen (red strokes by default)
+- Release **Cmd** to stop drawing — type normally again
+- A colored dot appears at the cursor while Cmd is held to indicate drawing is ready
 - Drawing resets the idle timer — strokes and pill fade together
 - Customize line color and width via `style.drawingLineColor` and `style.drawingLineWidth` in config
 
@@ -72,7 +73,7 @@ While the pill is active:
 | **Cmd+Down** | Next theme |
 | **Cmd+Right** | Scale pill up |
 | **Cmd+Left** | Scale pill down |
-| **Cmd+D** | Toggle drawing mode |
+| **Hold Cmd + click+drag** | Draw on screen |
 | **Escape** | Dismiss pill |
 | **Enter** | New line |
 
