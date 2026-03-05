@@ -214,7 +214,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             Backspace — Delete character
 
             While pill is active:
-            Hold ⌘ + drag — Draw on screen
+            Hold ⌘ + click+drag — Draw on screen
             ⌘↑ / ⌘↓ — Cycle themes
             ⌘→ / ⌘← — Scale pill up / down
 
