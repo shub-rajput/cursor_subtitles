@@ -67,6 +67,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(NSMenuItem(title: "Reset Config", action: #selector(resetConfig), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "About", action: #selector(showAbout), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Keyboard Shortcuts", action: #selector(showKeyboardShortcuts), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         return menu
     }
@@ -90,9 +91,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
 
         submenu.addItem(NSMenuItem.separator())
-        let hint = NSMenuItem(title: "⌘↑ / ⌘↓ to cycle themes", action: nil, keyEquivalent: "")
-        hint.isEnabled = false
-        submenu.addItem(hint)
+        submenu.addItem(NSMenuItem(title: "Open Themes Folder", action: #selector(openThemesFolder), keyEquivalent: ""))
 
         return submenu
     }
@@ -134,7 +133,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
     func menuWillOpen(_ menu: NSMenu) {
         let hotkey = ConfigManager.shared.config.hotkey
-        menu.items.first(where: { $0.title.hasSuffix("to show subtitle") })?.title = "\(hotkey) to show subtitle"
+        menu.items.first(where: { $0.title.hasSuffix("to start typing") })?.title = "\(hotkey) to start typing"
         menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
@@ -172,7 +171,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
         let alert = NSAlert()
         alert.messageText = "Pubbles"
-        alert.informativeText = "Version \(version)\n\nReal-time on-screen subtitles near your cursor.\n\nCopyright © 2026 Shubhang Haresh Rajput"
+        alert.informativeText = "Version \(version)\n\nSubtitles for your pointer.\n\nCopyright © 2026 Shubhang Haresh Rajput"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Support Pubbles ♥")
@@ -184,6 +183,34 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else if response == .alertThirdButtonReturn {
             NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles")!)
         }
+    }
+
+    @objc private func openThemesFolder() {
+        let themesURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/pubbles/themes")
+        NSWorkspace.shared.open(themesURL)
+    }
+
+    @objc private func showKeyboardShortcuts() {
+        let hotkey = ConfigManager.shared.config.hotkey
+        let alert = NSAlert()
+        alert.messageText = "Hotkeys"
+        alert.informativeText = """
+            \(hotkey) — Toggle Pubble pill
+            Esc — Dismiss pill
+            Enter — New line
+            Backspace — Delete character
+
+            While pill is active:
+            ⌘↑ / ⌘↓ — Cycle themes
+            ⌘→ / ⌘← — Increase / decrease font size
+
+            Click anywhere — Dismiss pill
+            """
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        NSApp.activate(ignoringOtherApps: true)
+        alert.runModal()
     }
 
     @objc private func quitApp() {
