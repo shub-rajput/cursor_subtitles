@@ -1,10 +1,12 @@
 import AppKit
 import SwiftUI
+import Combine
 
 @MainActor
 class OverlayController {
     private var windows: [ObjectIdentifier: OverlayWindow] = [:]
     private let viewModel: SubtitleViewModel
+    private var cancellables = Set<AnyCancellable>()
 
     init(viewModel: SubtitleViewModel) {
         self.viewModel = viewModel
@@ -17,6 +19,17 @@ class OverlayController {
                 self?.syncWindows()
             }
         }
+
+        // When drawing mode is on and pill is active, overlay absorbs clicks
+        // (blocks apps below but screenshot tools at higher levels still work)
+        Publishers.CombineLatest(viewModel.$isActive, viewModel.$drawingModeEnabled)
+            .sink { [weak self] isActive, drawingEnabled in
+                MainActor.assumeIsolated {
+                    let shouldBlock = isActive && drawingEnabled
+                    self?.windows.values.forEach { $0.ignoresMouseEvents = !shouldBlock }
+                }
+            }
+            .store(in: &cancellables)
     }
 
     func show() {
