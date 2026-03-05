@@ -2,7 +2,7 @@
 
 # Pubbles
 
-Subtitle bubbles for your pointer. A lightweight macOS menubar app that displays text bubbles below the cursor when enabled. Perfect for real-time context while screen recording. Requires **macOS 14.0+** (Sonoma or later).
+Subtitle bubbles for your pointer. A lightweight macOS menubar app that displays text bubbles below the pointer when enabled. Perfect for real-time context while screen recording. Requires **macOS 14.0+** (Sonoma or later).
 
 <a href='https://ko-fi.com/U7U11CXDRK' target='_blank'><img height='42' style='border:0px;height:42px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
@@ -46,10 +46,10 @@ open Pubbles.app
 ## Usage
 
 1. Press **Cmd+/** (editable) to activate the subtitle bubble
-2. Type your text — it appears in a pill near your cursor
+2. Type your text — it appears in a pill near your pointer
 3. Press **Enter** for a new line
 4. Press **Escape** or click anywhere to dismiss
-5. The pill follows your cursor and fades after 10s of inactivity
+5. The pill follows your pointer and fades after 10s of inactivity
 
 ### Keyboard Shortcuts
 
@@ -178,12 +178,12 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `fontFamily` — font name or `system` (default: `system`)
 - `fontWeight` — font weight: `ultraLight`, `thin`, `light`, `regular`, `medium`, `semibold`, `bold`, `heavy`, `black` (default: `medium`)
 - `cornerRadius` — pill roundness (default: `20`)
-- `pointerCorner` — sharp top-left corner pointing at cursor (default: `true`)
+- `pointerCorner` — sharp top-left corner pointing at pointer (default: `true`)
 - `paddingH` — horizontal padding (default: `16`)
 - `paddingV` — vertical padding (default: `8`)
 - `maxWidth` — max pill width (default: `300`)
-- `cursorOffset.x` — horizontal offset from cursor (default: `12`)
-- `cursorOffset.y` — vertical offset from cursor (default: `12`)
+- `cursorOffset.x` — horizontal offset from pointer (default: `12`)
+- `cursorOffset.y` — vertical offset from pointer (default: `12`)
 - `borderColor` — border color, hex (default: `#FFFFFF`)
 - `borderOpacity` — border opacity 0–1 (default: `0.2`)
 - `borderWidth` — border width (default: `2`)
