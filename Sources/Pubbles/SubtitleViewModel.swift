@@ -22,6 +22,7 @@ class SubtitleViewModel: ObservableObject {
     /// Whether cursor is on a new blank line (Enter pressed, haven't typed yet)
     @Published var onNewLine: Bool = false
 
+    @Published var drawingAllowed: Bool = true
     @Published var drawingModeEnabled: Bool = false
     @Published var strokes: [[NSPoint]] = []
     /// Not @Published — updated at ~60Hz during drag; Canvas reads it via TimelineView to avoid PillView redraws
@@ -61,7 +62,6 @@ class SubtitleViewModel: ObservableObject {
         previousLineChars = []
         showPreviousLine = false
         onNewLine = false
-        isShowingDrawingHint = false
         isActive = true
         isVisible = true
         resetIdleTimer()
@@ -82,12 +82,9 @@ class SubtitleViewModel: ObservableObject {
             self.previousLineChars = []
             self.showPreviousLine = false
             self.onNewLine = false
-            self.isShowingDrawingHint = false
             self.clearStrokes()
         }
     }
-
-    private var isShowingDrawingHint = false
 
     private func ensureActiveScreen() {
         if activeScreenID == nil,
@@ -109,26 +106,7 @@ class SubtitleViewModel: ObservableObject {
         }
     }
 
-    func showDrawingModeHint(enabled: Bool) {
-        let hintText = enabled ? "Drawing on" : "Drawing off"
-
-        // If pill is active, only update if currently showing a hint (don't overwrite user text)
-        if isActive {
-            guard isShowingDrawingHint else { return }
-            text = hintText
-            idleTimer?.invalidate()
-            idleTimer = Timer.scheduledTimer(withTimeInterval: 3, repeats: false) { [weak self] _ in
-                DispatchQueue.main.async { self?.dismiss() }
-            }
-            return
-        }
-
-        isShowingDrawingHint = true
-        showTemporaryPill(text: hintText, timeout: 3)
-    }
-
     func showOnboarding() {
-        ensureActiveScreen()
         previousLine = "Hey! Press ⌘/ to enable Pubbles"
         showPreviousLine = true
         showTemporaryPill(text: "Check the menubar for more settings!", timeout: 10)
@@ -137,13 +115,6 @@ class SubtitleViewModel: ObservableObject {
     func handleCharacter(_ char: String) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
-
-        // Clear hint text when user starts typing
-        if isShowingDrawingHint {
-            isShowingDrawingHint = false
-            text = ""
-            animatedChars = []
-        }
 
         // If we're on a new line and start typing, fade out the previous line
         if onNewLine && showPreviousLine {
