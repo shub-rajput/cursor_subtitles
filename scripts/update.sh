@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-APP_NAME="CursorSubtitles"
-BUNDLE_ID="com.cursor-subtitles.app"
+APP_NAME="Pubbles"
+BUNDLE_ID="com.pubbles.app"
 
 echo "Updating ${APP_NAME}..."
 
@@ -26,7 +26,7 @@ echo "Building..."
 ./scripts/build.sh
 
 # Check if signed
-if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "Pubbles"; then
     echo ""
     echo "Signed build — permissions will persist."
     open "${APP_NAME}.app"

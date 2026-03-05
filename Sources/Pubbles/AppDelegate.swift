@@ -164,25 +164,25 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     @objc private func openConfig() {
         NSWorkspace.shared.open(
             FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".config/cursor-subtitles/config.json")
+                .appendingPathComponent(".config/pubbles/config.json")
         )
     }
 
     @objc private func showAbout() {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
         let alert = NSAlert()
-        alert.messageText = "Cursor Subtitles"
+        alert.messageText = "Pubbles"
         alert.informativeText = "Version \(version)\n\nReal-time on-screen subtitles near your cursor.\n\nCopyright © 2026 Shubhang Haresh Rajput"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Support the App ♥")
+        alert.addButton(withTitle: "Support Pubbles ♥")
         alert.addButton(withTitle: "GitHub")
         NSApp.activate(ignoringOtherApps: true)
         let response = alert.runModal()
         if response == .alertSecondButtonReturn {
             NSWorkspace.shared.open(URL(string: "https://ko-fi.com/shubhangrajput")!)
         } else if response == .alertThirdButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/cursor_subtitles")!)
+            NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles")!)
         }
     }
 

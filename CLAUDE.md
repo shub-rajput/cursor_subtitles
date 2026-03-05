@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What This Is
 
-CursorSubtitles is a native macOS menubar app that displays chat bubbles near the cursor for real-time on-screen subtitles while screen recording. It has no external dependencies — pure Swift with AppKit, SwiftUI, and CoreGraphics.
+Pubbles is a native macOS menubar app that displays chat bubbles near the cursor for real-time on-screen subtitles while screen recording. It has no external dependencies — pure Swift with AppKit, SwiftUI, and CoreGraphics.
 
 **Platform:** macOS 14.0+ (Sonoma) | **Swift Tools:** 6.0 | **Build System:** Swift Package Manager
 
@@ -21,7 +21,7 @@ swift build
 ./scripts/update.sh
 
 # Run the app
-open CursorSubtitles.app
+open Pubbles.app
 ```
 
 There are no tests or linting configured.
@@ -60,11 +60,11 @@ CursorTracker (60 FPS mouse position via timer)
 - AppKit (NSPanel, NSApplication) hosts SwiftUI views via NSHostingView
 - Colors are configured as hex strings in JSON, parsed by a `Color.fromHex()` extension in PillView
 - The overlay is an NSPanel that never steals focus and ignores all mouse events
-- The build script (`scripts/build.sh`) copies the binary, Info.plist, and Resources/ into a `.app` bundle, then codesigns if a local "CursorSubtitles" certificate exists
+- The build script (`scripts/build.sh`) copies the binary, Info.plist, and Resources/ into a `.app` bundle, then codesigns if a local "Pubbles" certificate exists
 
 ## Themes
 
-Ghostty-style file-based themes in `~/.config/cursor-subtitles/themes/`. Built-in themes shipped in `Resources/themes/`, seeded to user dir on first launch. Theme files are JSON with a `name` field plus any `style`/`behavior` keys.
+Ghostty-style file-based themes in `~/.config/pubbles/themes/`. Built-in themes shipped in `Resources/themes/`, seeded to user dir on first launch. Theme files are JSON with a `name` field plus any `style`/`behavior` keys.
 
 Config merge order: **defaults → theme → user config** (user always wins). Merge uses `JSONSerialization` deep-merge, not `Codable`, to distinguish absent keys from default values.
 
@@ -74,7 +74,7 @@ PillView supports three background modes via StyleConfig fields: `vibrancy` (Swi
 
 ## Configuration
 
-User config at `~/.config/cursor-subtitles/config.json` with live reload via file watcher. The JSON structure mirrors the Swift structs:
+User config at `~/.config/pubbles/config.json` with live reload via file watcher. The JSON structure mirrors the Swift structs:
 
 ```
 AppConfig

@@ -2,12 +2,12 @@
 import PackageDescription
 
 let package = Package(
-    name: "CursorSubtitles",
+    name: "Pubbles",
     platforms: [.macOS(.v14)],
     targets: [
         .executableTarget(
-            name: "CursorSubtitles",
-            path: "Sources/CursorSubtitles"
+            name: "Pubbles",
+            path: "Sources/Pubbles"
         )
     ]
 )

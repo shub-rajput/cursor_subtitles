@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-APP_NAME="CursorSubtitles"
-BUNDLE_ID="com.cursor-subtitles.app"
+APP_NAME="Pubbles"
+BUNDLE_ID="com.pubbles.app"
 BUILD_DIR=".build/release"
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null || echo "unknown")
 
@@ -28,9 +28,9 @@ if [ -d "Resources/themes" ]; then
     cp -r Resources/themes "${APP_NAME}.app/Contents/Resources/themes"
 fi
 
-if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
-    codesign --force --deep --sign "CursorSubtitles" --identifier "com.cursor-subtitles.app" "${APP_NAME}.app"
-    echo "Signed with CursorSubtitles certificate."
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "Pubbles"; then
+    codesign --force --deep --sign "Pubbles" --identifier "com.pubbles.app" "${APP_NAME}.app"
+    echo "Signed with Pubbles certificate."
 else
     echo "No signing certificate found. App will work but may need permission re-granted after each rebuild."
     echo "See README for how to create a local signing certificate."
@@ -39,7 +39,7 @@ fi
 echo "Built ${APP_NAME}.app v${VERSION}"
 
 # Relaunch
-if security find-identity -v -p codesigning 2>/dev/null | grep -q "CursorSubtitles"; then
+if security find-identity -v -p codesigning 2>/dev/null | grep -q "Pubbles"; then
     echo "Signed build — permissions will persist."
     open "${APP_NAME}.app"
 else

@@ -1,8 +1,8 @@
 <img width="124" height="124" alt="Cursor_subtitles_256x256" src="https://github.com/user-attachments/assets/54467e14-4770-4bcf-b6b8-7bb9d93e772f" />
 
-# Cursor Subtitles
+# Pubbles
 
-A lightweight macOS menubar app that displays text bubbles below the cursor when enabled. Perfect for real-time context while screen recording. Requires **macOS 14.0+** (Sonoma or later).
+Subtitle bubbles for your pointer. A lightweight macOS menubar app that displays text bubbles below the cursor when enabled. Perfect for real-time context while screen recording. Requires **macOS 14.0+** (Sonoma or later).
 
 <a href='https://ko-fi.com/U7U11CXDRK' target='_blank'><img height='42' style='border:0px;height:42px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
 
@@ -12,7 +12,7 @@ A lightweight macOS menubar app that displays text bubbles below the cursor when
 ### Homebrew (Recommended)
 
 ```bash
-brew install --cask shub-rajput/cursor-subtitles/cursor-subtitles
+brew install --cask shub-rajput/pubbles/pubbles
 ```
 
 ### Install Script
@@ -20,32 +20,32 @@ brew install --cask shub-rajput/cursor-subtitles/cursor-subtitles
 Paste this in Terminal, downloads the latest release, removes the macOS quarantine flag, and moves the app to `/Applications`:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shub-rajput/cursor_subtitles/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/shub-rajput/pubbles/main/scripts/install.sh | bash
 ```
 
 ### Manual
 
-Download the latest `.zip` from [Releases](https://github.com/shub-rajput/cursor_subtitles/releases), unzip, and move `CursorSubtitles.app` to `/Applications`.
+Download the latest `.zip` from [Releases](https://github.com/shub-rajput/pubbles/releases), unzip, and move `Pubbles.app` to `/Applications`.
 
 > [!NOTE]
 > **Gatekeeper warning?** macOS blocks apps from unidentified developers by default. Fix it with one of these:
-> - **Right-click method (easiest):** Right-click `CursorSubtitles.app` → **Open** → click **Open** in the dialog. You only need to do this once.
-> - **Terminal:** `xattr -cr /Applications/CursorSubtitles.app`
+> - **Right-click method (easiest):** Right-click `Pubbles.app` → **Open** → click **Open** in the dialog. You only need to do this once.
+> - **Terminal:** `xattr -cr /Applications/Pubbles.app`
 > - **System Settings:** System Settings → Privacy & Security → scroll down → click **Open Anyway**
 
 ### Build from Source
 
 ```bash
-git clone https://github.com/shub-rajput/cursor_subtitles.git
-cd cursor_subtitles
+git clone https://github.com/shub-rajput/pubbles.git
+cd pubbles
 chmod +x scripts/build.sh
 ./scripts/build.sh
-open CursorSubtitles.app
+open Pubbles.app
 ```
 
 ## Usage
 
-1. Press **Cmd+/** to activate the subtitle bubble
+1. Press **Cmd+/** (editable) to activate the subtitle bubble
 2. Type your text — it appears in a pill near your cursor
 3. Press **Enter** for a new line
 4. Press **Escape** or click anywhere to dismiss
@@ -57,7 +57,7 @@ While the pill is active:
 
 | Shortcut | Action |
 |----------|--------|
-| **Cmd+/** | Toggle pill on/off |
+| **Cmd+/** (editable)| Toggle pill on/off |
 | **Cmd+Up** | Previous theme |
 | **Cmd+Down** | Next theme |
 | **Cmd+Right** | Increase font size (+2pt) |
@@ -70,13 +70,13 @@ While the pill is active:
 ### Homebrew
 
 ```bash
-brew update && brew upgrade --cask cursor-subtitles
+brew update && brew upgrade --cask pubbles
 ```
 
 ### Install Script
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/shub-rajput/cursor_subtitles/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/shub-rajput/pubbles/main/scripts/install.sh | bash
 ```
 
 Quits the running app, installs the latest release, and relaunches.
@@ -97,7 +97,7 @@ Without a local signing certificate, macOS invalidates Accessibility permission 
 
 1. Open **Keychain Access** (Spotlight → "Keychain Access")
 2. Menu: **Keychain Access → Certificate Assistant → Create a Certificate...**
-3. Set **Name** to `CursorSubtitles`, **Identity Type** to Self Signed Root, **Certificate Type** to Code Signing
+3. Set **Name** to `Pubbles`, **Identity Type** to Self Signed Root, **Certificate Type** to Code Signing
 4. Click **Create**
 5. Find the certificate in Keychain Access, double-click it, expand **Trust**, set **Code Signing** to **Always Trust** (enter your Mac login password when prompted)
 
@@ -112,7 +112,7 @@ Switch themes from the menubar icon → **Theme**. Built-in themes:
 - **Candy** — pastel gradient with typewriter font
 - **Frosted Glass** — translucent frosted blur
 - **Liquid Glass** — Apple's native glass effect (macOS Tahoe/26+)
-- **Midnight** — dark and minimal with charcoal gradient 
+- **Midnight** — dark and minimal with charcoal gradient
 - **Notepad** — warm parchment with Georgia serif
 - **Terminal** — dark, green text, monospace font
 
@@ -120,7 +120,7 @@ When selecting Default theme you can quickly change the pill color from preset o
 
 ### Custom Themes
 
-Drop a `.json` file in `~/.config/cursor-subtitles/themes/` and it appears in the Theme menu. A theme file sets any style or behavior options:
+Drop a `.json` file in `~/.config/pubbles/themes/` and it appears in the Theme menu. A theme file sets any style or behavior options:
 
 ```json
 {
@@ -137,7 +137,7 @@ See the built-in themes in that directory for more examples.
 
 ## Configuration
 
-Edit `~/.config/cursor-subtitles/config.json` to customize. The config file only needs to contain the values you want to change — everything else uses defaults (or theme values if a theme is active).
+Edit `~/.config/pubbles/config.json` to customize. The config file only needs to contain the values you want to change — everything else uses defaults (or theme values if a theme is active).
 
 A minimal config looks like:
 
@@ -164,7 +164,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 
 **Top-level:**
 - `hotkey` — trigger shortcut (default: `cmd+/`)
-- `theme` — theme name matching a file in `~/.config/cursor-subtitles/themes/` (default: none)
+- `theme` — theme name matching a file in `~/.config/pubbles/themes/` (default: none)
 
 **Style** (`style.*`):
 - `backgroundColor` — pill color, hex (default: `#1F6BE8`)

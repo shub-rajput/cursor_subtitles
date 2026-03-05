@@ -64,7 +64,7 @@ class SubtitleViewModel: ObservableObject {
             ?? NSScreen.main {
             activeScreenID = ObjectIdentifier(screen)
         }
-        previousLine = "Hey! Press ⌘/ to enable CursorSubtitles"
+        previousLine = "Hey! Press ⌘/ to enable Pubbles"
         showPreviousLine = true
         text = "Check the menubar for more settings!"
         onNewLine = false

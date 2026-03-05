@@ -54,14 +54,14 @@ class ConfigManager: ObservableObject {
 
     private nonisolated let configURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".config/cursor-subtitles")
+            .appendingPathComponent(".config/pubbles")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir.appendingPathComponent("config.json")
     }()
 
     private nonisolated let themesURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser
-            .appendingPathComponent(".config/cursor-subtitles/themes")
+            .appendingPathComponent(".config/pubbles/themes")
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()

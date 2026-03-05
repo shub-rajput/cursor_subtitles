@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-REPO="shub-rajput/cursor_subtitles"
-APP_NAME="CursorSubtitles"
+REPO="shub-rajput/pubbles"
+APP_NAME="Pubbles"
 INSTALL_DIR="/Applications"
 
 echo "Installing ${APP_NAME}..."
