@@ -39,6 +39,7 @@ struct DrawingCanvasView: View {
 struct PillContainerView: View {
     @ObservedObject var viewModel: SubtitleViewModel
     @ObservedObject private var configManager = ConfigManager.shared
+    @State private var springScale: CGFloat = 1.0
     let screenID: ObjectIdentifier
 
     private var fadeIn: Double { configManager.config.behavior.fadeInDuration }
@@ -60,6 +61,14 @@ struct PillContainerView: View {
 
             if viewModel.isVisible && isActiveScreen {
                 PillView(viewModel: viewModel)
+                    .scaleEffect(springScale, anchor: .topLeading)
+                    .onChange(of: configManager.config.style.pillScale) { oldVal, newVal in
+                        guard newVal > 0 else { return }
+                        springScale = oldVal / newVal
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.55)) {
+                            springScale = 1.0
+                        }
+                    }
                     .offset(
                         x: viewModel.cursorPosition.x + configManager.config.style.cursorOffset.x,
                         y: viewModel.cursorPosition.y + configManager.config.style.cursorOffset.y
