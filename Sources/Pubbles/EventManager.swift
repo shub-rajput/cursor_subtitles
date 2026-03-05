@@ -42,8 +42,6 @@ final class EventManager {
         let eventMask: CGEventMask =
             (1 << CGEventType.keyDown.rawValue) |
             (1 << CGEventType.leftMouseDown.rawValue) |
-            (1 << CGEventType.leftMouseDragged.rawValue) |
-            (1 << CGEventType.leftMouseUp.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue)
 
         let retainedSelf = Unmanaged.passRetained(self)
@@ -93,58 +91,25 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
-        // Mouse events — drawing or dismiss
-        if type == .leftMouseDown || type == .leftMouseDragged || type == .leftMouseUp || type == .rightMouseDown {
+        // Mouse click — dismiss pill (drawing is handled by overlay window gesture)
+        if type == .leftMouseDown || type == .rightMouseDown {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
             let drawingEnabled = MainActor.assumeIsolated { self.viewModel.drawingModeEnabled }
 
-            // Right click always dismisses
-            if type == .rightMouseDown {
-                if isActive {
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated { self.viewModel.dismiss() }
-                    }
-                }
-                return Unmanaged.passUnretained(event)
-            }
-
-            // Left click: draw if enabled, otherwise dismiss
-            if isActive && drawingEnabled {
-                let screenPoint: NSPoint = MainActor.assumeIsolated {
-                    let mouseLocation = NSEvent.mouseLocation
-                    let screen = NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) }
-                        ?? NSScreen.main
-                    guard let screen = screen else { return NSPoint.zero }
-                    let localX = mouseLocation.x - screen.frame.origin.x
-                    let localY = screen.frame.height - (mouseLocation.y - screen.frame.origin.y)
-                    return NSPoint(x: localX, y: localY)
-                }
-
-                if type == .leftMouseDown {
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated { self.viewModel.startStroke(at: screenPoint) }
-                    }
-                    return nil // consume mouseDown to prevent clicks on apps underneath
-                } else if type == .leftMouseDragged {
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated { self.viewModel.continueStroke(to: screenPoint) }
-                    }
-                    return Unmanaged.passUnretained(event) // pass through so cursor keeps moving
-                } else if type == .leftMouseUp {
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated { self.viewModel.endStroke() }
-                    }
-                    return nil // consume mouseUp
-                }
-                return Unmanaged.passUnretained(event)
-            }
-
-            // Drawing off or pill inactive — left click dismisses
-            if type == .leftMouseDown && isActive {
+            // When drawing mode is on, overlay window handles left clicks — don't dismiss
+            if type == .leftMouseDown && isActive && !drawingEnabled {
                 DispatchQueue.main.async {
                     MainActor.assumeIsolated { self.viewModel.dismiss() }
                 }
             }
+
+            // Right click always dismisses
+            if type == .rightMouseDown && isActive {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { self.viewModel.dismiss() }
+                }
+            }
+
             return Unmanaged.passUnretained(event)
         }
 
