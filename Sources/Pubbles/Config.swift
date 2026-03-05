@@ -32,6 +32,7 @@ struct StyleConfig: Codable, Sendable {
     var glassEffect: Bool = false
     var drawingLineColor: String = "#FF0000"
     var drawingLineWidth: CGFloat = 3
+    var pillScale: CGFloat = 1.0
 }
 
 struct BehaviorConfig: Codable, Sendable {
@@ -256,14 +257,20 @@ class ConfigManager: ObservableObject {
         }
     }
 
-    func adjustFontSize(increase: Bool) {
-        let current = config.style.fontSize
-        let step: CGFloat = 2
-        let newSize = increase ? min(current + step, 48) : max(current - step, 8)
-        guard newSize != current else { return }
+    private static let scalePresets: [CGFloat] = [0.8, 1.0, 1.3, 1.6, 2.0]
+
+    func adjustPillScale(increase: Bool) {
+        let current = config.style.pillScale
+        let next: CGFloat
+        if increase {
+            next = Self.scalePresets.first(where: { $0 > current + 0.01 }) ?? current
+        } else {
+            next = Self.scalePresets.last(where: { $0 < current - 0.01 }) ?? current
+        }
+        guard next != current else { return }
         guard var dict = readConfigDict() else { return }
         var styleDict = dict["style"] as? [String: Any] ?? [:]
-        styleDict["fontSize"] = newSize
+        styleDict["pillScale"] = next
         dict["style"] = styleDict
         writeConfigDict(dict)
     }
