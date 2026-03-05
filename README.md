@@ -51,6 +51,16 @@ open Pubbles.app
 4. Press **Escape** or click anywhere to dismiss
 5. The pill follows your pointer and fades after 10s of inactivity
 
+### Drawing Mode
+
+Toggle drawing mode from the menubar or press **Cmd+D**. When enabled:
+
+- Activate the pill with **Cmd+/** as usual
+- Click and drag to draw on screen (red strokes by default)
+- Type to add text alongside your drawings
+- Drawing resets the idle timer — strokes and pill fade together
+- Customize line color and width via `style.drawingLineColor` and `style.drawingLineWidth` in config
+
 ### Keyboard Shortcuts
 
 While the pill is active:
@@ -62,6 +72,7 @@ While the pill is active:
 | **Cmd+Down** | Next theme |
 | **Cmd+Right** | Increase font size (+2pt) |
 | **Cmd+Left** | Decrease font size (-2pt) |
+| **Cmd+D** | Toggle drawing mode |
 | **Escape** | Dismiss pill |
 | **Enter** | New line |
 
@@ -192,6 +203,8 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `shadowRadius` — shadow blur (default: `3`)
 - `shadowX` — shadow horizontal offset (default: `0`)
 - `shadowY` — shadow vertical offset (default: `5`)
+- `drawingLineColor` — drawing stroke color, hex (default: `#FF0000`)
+- `drawingLineWidth` — drawing stroke width (default: `3`)
 
 **Behavior** (`behavior.*`):
 - `idleTimeout` — seconds before fade (default: `10`)

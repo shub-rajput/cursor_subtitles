@@ -33,11 +33,11 @@ The app runs as a menubar-only accessory (`LSUIElement = true`, no dock icon). E
 Core data flow:
 
 ```
-EventManager (CGEvent tap: hotkey Cmd+/, keyboard input)
+EventManager (CGEvent tap: hotkey Cmd+/, Cmd+D, keyboard input, mouse draw events)
     ↓
-SubtitleViewModel (text state, idle timeout, visibility)
+SubtitleViewModel (text state, drawing strokes, idle timeout, visibility)
     ↓
-PillContainerView → PillView (SwiftUI pill at cursor position)
+PillContainerView → PillView + DrawingCanvasView (SwiftUI pill + strokes at cursor position)
     ↑
 CursorTracker (60 FPS mouse position via timer)
 ```
@@ -45,11 +45,11 @@ CursorTracker (60 FPS mouse position via timer)
 **Key components:**
 
 - **AppDelegate** — Orchestrates all components: menubar setup, creates EventManager/CursorTracker/OverlayController, wires them to the shared SubtitleViewModel
-- **EventManager** — CGEvent tap for global hotkey capture and keyboard input routing. Requires Accessibility permission
-- **SubtitleViewModel** — Central state: current text, previous line, visibility, idle timer. ObservableObject driving SwiftUI
+- **EventManager** — CGEvent tap for global hotkey capture, keyboard input routing, and mouse event capture for drawing mode. Requires Accessibility permission
+- **SubtitleViewModel** — Central state: current text, previous line, visibility, idle timer, drawing strokes. ObservableObject driving SwiftUI
 - **OverlayController** — Manages the overlay window lifecycle, hosts SwiftUI via NSHostingView
 - **OverlayWindow** — Transparent, click-through NSPanel (`.nonactivatingPanel`, `ignoresMouseEvents = true`) spanning the full screen
-- **PillView / PillContainerView** — SwiftUI rendering: pill shape, text, blinking cursor, positioned at mouse coordinates with fade animations
+- **PillView / PillContainerView** — SwiftUI rendering: pill shape, text, blinking cursor, positioned at mouse coordinates with fade animations. PillContainerView also hosts `DrawingCanvasView` (SwiftUI Canvas for stroke rendering)
 - **ConfigManager** — Singleton managing config with deep-merge resolution (defaults → theme → user overrides), DispatchSource file watching for live reload, theme file seeding from bundle, and menubar helpers (`setTheme`, `setColor`, `availableThemes`)
 - **CursorTracker** — Timer-based mouse position polling, updates the view model
 
@@ -61,6 +61,7 @@ CursorTracker (60 FPS mouse position via timer)
 - Colors are configured as hex strings in JSON, parsed by a `Color.fromHex()` extension in PillView
 - The overlay is an NSPanel that never steals focus and ignores all mouse events
 - The build script (`scripts/build.sh`) copies the binary, Info.plist, and Resources/ into a `.app` bundle, then codesigns if a local "Pubbles" certificate exists
+- Drawing mode is a global toggle (Cmd+D / menu item) that changes left-click behavior while the pill is active: clicks become strokes instead of dismissing. `currentStroke` is not `@Published` — a `TimelineView` polls it at display refresh rate to avoid triggering PillView redraws. On dismiss, content clearing is delayed until after the fade animation completes
 
 ## Themes
 
@@ -80,7 +81,7 @@ User config at `~/.config/pubbles/config.json` with live reload via file watcher
 AppConfig
 ├── hotkey: String
 ├── theme: String? (matches filename in themes dir)
-├── style: StyleConfig (backgroundColor, backgroundOpacity, vibrancy, backgroundGradient, glassEffect, textColor, fontSize, cornerRadius, maxWidth, cursorOffset, border*, shadow*, ...)
+├── style: StyleConfig (backgroundColor, backgroundOpacity, vibrancy, backgroundGradient, glassEffect, textColor, fontSize, cornerRadius, maxWidth, cursorOffset, border*, shadow*, drawingLineColor, drawingLineWidth, ...)
 └── behavior: BehaviorConfig (idleTimeout, fadeOutDuration, fadeInDuration, maxLines, charLimit)
 ```
 
