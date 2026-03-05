@@ -184,8 +184,8 @@ final class EventManager {
         let cmdArrowActions: [UInt16: @MainActor () -> Void] = [
             125: { ConfigManager.shared.cycleTheme(forward: true) },   // Cmd+Down
             126: { ConfigManager.shared.cycleTheme(forward: false) },  // Cmd+Up
-            124: { ConfigManager.shared.adjustFontSize(increase: true) },  // Cmd+Right
-            123: { ConfigManager.shared.adjustFontSize(increase: false) }, // Cmd+Left
+            124: { ConfigManager.shared.adjustPillScale(increase: true) },  // Cmd+Right
+            123: { ConfigManager.shared.adjustPillScale(increase: false) }, // Cmd+Left
         ]
         if mods.contains(.command), let action = cmdArrowActions[keyCode] {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
