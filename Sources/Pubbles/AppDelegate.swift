@@ -216,7 +216,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
             While pill is active:
             ⌘↑ / ⌘↓ — Cycle themes
-            ⌘→ / ⌘← — Increase / decrease font size
+            ⌘→ / ⌘← — Scale pill up / down
 
             Click anywhere — Dismiss pill
             """
