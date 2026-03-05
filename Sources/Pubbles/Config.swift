@@ -30,6 +30,8 @@ struct StyleConfig: Codable, Sendable {
     var vibrancy: String? = nil
     var backgroundGradient: [String]? = nil
     var glassEffect: Bool = false
+    var drawingLineColor: String = "#FF0000"
+    var drawingLineWidth: CGFloat = 3
 }
 
 struct BehaviorConfig: Codable, Sendable {
