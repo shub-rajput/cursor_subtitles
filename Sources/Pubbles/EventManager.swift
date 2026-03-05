@@ -41,6 +41,7 @@ final class EventManager {
     private func setupEventTap() {
         let eventMask: CGEventMask =
             (1 << CGEventType.keyDown.rawValue) |
+            (1 << CGEventType.flagsChanged.rawValue) |
             (1 << CGEventType.leftMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue)
 
@@ -91,6 +92,17 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
+        // Track Cmd key state for hold-to-draw
+        if type == .flagsChanged {
+            let cmdHeld = event.flags.contains(.maskCommand)
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    self.viewModel.drawingModeEnabled = cmdHeld && self.viewModel.drawingAllowed
+                }
+            }
+            return Unmanaged.passUnretained(event)
+        }
+
         // Mouse click — dismiss pill (drawing is handled by overlay window gesture)
         if type == .leftMouseDown || type == .rightMouseDown {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
@@ -129,17 +141,6 @@ final class EventManager {
                 MainActor.assumeIsolated {
                     if self.viewModel.isActive { self.viewModel.dismiss() }
                     else { self.viewModel.activate() }
-                }
-            }
-            return nil
-        }
-
-        // Cmd+D toggles drawing mode
-        if keyCode == 2 && mods == .command {
-            DispatchQueue.main.async {
-                MainActor.assumeIsolated {
-                    self.viewModel.drawingModeEnabled.toggle()
-                    self.viewModel.showDrawingModeHint(enabled: self.viewModel.drawingModeEnabled)
                 }
             }
             return nil
