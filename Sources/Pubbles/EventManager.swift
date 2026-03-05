@@ -42,6 +42,8 @@ final class EventManager {
         let eventMask: CGEventMask =
             (1 << CGEventType.keyDown.rawValue) |
             (1 << CGEventType.leftMouseDown.rawValue) |
+            (1 << CGEventType.leftMouseDragged.rawValue) |
+            (1 << CGEventType.leftMouseUp.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue)
 
         let retainedSelf = Unmanaged.passRetained(self)
@@ -91,10 +93,54 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
-        // Mouse click dismisses pill
-        if type == .leftMouseDown || type == .rightMouseDown {
+        // Mouse events — drawing or dismiss
+        if type == .leftMouseDown || type == .leftMouseDragged || type == .leftMouseUp || type == .rightMouseDown {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
-            if isActive {
+            let drawingEnabled = MainActor.assumeIsolated { self.viewModel.drawingModeEnabled }
+
+            // Right click always dismisses
+            if type == .rightMouseDown {
+                if isActive {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.dismiss() }
+                    }
+                }
+                return Unmanaged.passUnretained(event)
+            }
+
+            // Left click: draw if enabled, otherwise dismiss
+            if isActive && drawingEnabled {
+                let screenPoint: NSPoint = MainActor.assumeIsolated {
+                    let mouseLocation = NSEvent.mouseLocation
+                    let screen = NSScreen.screens.first { NSMouseInRect(mouseLocation, $0.frame, false) }
+                        ?? NSScreen.main
+                    guard let screen = screen else { return NSPoint.zero }
+                    let localX = mouseLocation.x - screen.frame.origin.x
+                    let localY = screen.frame.height - (mouseLocation.y - screen.frame.origin.y)
+                    return NSPoint(x: localX, y: localY)
+                }
+
+                if type == .leftMouseDown {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.startStroke(at: screenPoint) }
+                    }
+                    return nil // consume mouseDown to prevent clicks on apps underneath
+                } else if type == .leftMouseDragged {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.continueStroke(to: screenPoint) }
+                    }
+                    return Unmanaged.passUnretained(event) // pass through so cursor keeps moving
+                } else if type == .leftMouseUp {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.endStroke() }
+                    }
+                    return nil // consume mouseUp
+                }
+                return Unmanaged.passUnretained(event)
+            }
+
+            // Drawing off or pill inactive — left click dismisses
+            if type == .leftMouseDown && isActive {
                 DispatchQueue.main.async {
                     MainActor.assumeIsolated { self.viewModel.dismiss() }
                 }
@@ -123,6 +169,17 @@ final class EventManager {
             return nil
         }
 
+        // Cmd+D toggles drawing mode
+        if keyCode == 2 && mods == .command {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    self.viewModel.drawingModeEnabled.toggle()
+                    self.viewModel.showDrawingModeHint(enabled: self.viewModel.drawingModeEnabled)
+                }
+            }
+            return nil
+        }
+
         // Cmd+arrow shortcuts (only when pill is active)
         let cmdArrowActions: [UInt16: @MainActor () -> Void] = [
             125: { ConfigManager.shared.cycleTheme(forward: true) },   // Cmd+Down
@@ -143,10 +200,10 @@ final class EventManager {
         let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
         guard isActive else { return Unmanaged.passUnretained(event) }
 
-        // Screenshot shortcuts — always pass through even when pill is active
-        // ⌘⇧3/4/5 (full screen, selection, toolbar) and ⌘⌃⇧3/4 (to clipboard)
-        let screenshotKeyCodes: Set<UInt16> = [20, 21, 23] // 3, 4, 5
-        if mods.contains(.command) && mods.contains(.shift) && screenshotKeyCodes.contains(keyCode) {
+        // Pass through any modifier combos — user's own shortcuts (Raycast, Alfred, app shortcuts, etc.)
+        // ⌘+arrows are already handled above before this point, everything else passes through.
+        let actionMods: NSEvent.ModifierFlags = [.command, .option, .control]
+        if !mods.intersection(actionMods).isEmpty {
             return Unmanaged.passUnretained(event)
         }
 
