@@ -76,7 +76,7 @@ struct PillView: View {
     }
     private var pillShape: UnevenRoundedRectangle {
         UnevenRoundedRectangle(
-            topLeadingRadius: style.pointerCorner ? 0 : style.cornerRadius,
+            topLeadingRadius: style.pointerCorner ? 2 : style.cornerRadius,
             bottomLeadingRadius: style.cornerRadius,
             bottomTrailingRadius: style.cornerRadius,
             topTrailingRadius: style.cornerRadius,
