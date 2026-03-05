@@ -143,6 +143,13 @@ final class EventManager {
         let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
         guard isActive else { return Unmanaged.passUnretained(event) }
 
+        // Screenshot shortcuts — always pass through even when pill is active
+        // ⌘⇧3/4/5 (full screen, selection, toolbar) and ⌘⌃⇧3/4 (to clipboard)
+        let screenshotKeyCodes: Set<UInt16> = [20, 21, 23] // 3, 4, 5
+        if mods.contains(.command) && mods.contains(.shift) && screenshotKeyCodes.contains(keyCode) {
+            return Unmanaged.passUnretained(event)
+        }
+
         // Escape
         if keyCode == 53 {
             DispatchQueue.main.async {
