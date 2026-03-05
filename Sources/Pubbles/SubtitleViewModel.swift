@@ -1,5 +1,11 @@
 import Foundation
 import AppKit
+import SwiftUI
+
+struct AnimatedChar: Identifiable, Equatable {
+    let id: Int
+    let character: String
+}
 
 @MainActor
 class SubtitleViewModel: ObservableObject {
@@ -11,6 +17,7 @@ class SubtitleViewModel: ObservableObject {
 
     /// The previous line shown above, fading out when user starts typing on the new line
     @Published var previousLine: String = ""
+    @Published var previousLineChars: [AnimatedChar] = []
     @Published var showPreviousLine: Bool = false
     /// Whether cursor is on a new blank line (Enter pressed, haven't typed yet)
     @Published var onNewLine: Bool = false
@@ -20,6 +27,9 @@ class SubtitleViewModel: ObservableObject {
     /// Not @Published — updated at ~60Hz during drag; Canvas reads it via TimelineView to avoid PillView redraws
     var currentStroke: [NSPoint] = []
     @Published var isDrawing: Bool = false
+
+    @Published var animatedChars: [AnimatedChar] = []
+    private var nextCharID = 0
 
     var config: ConfigManager { ConfigManager.shared }
 
@@ -45,7 +55,10 @@ class SubtitleViewModel: ObservableObject {
 
     func activate() {
         text = ""
+        animatedChars = []
+        nextCharID = 0
         previousLine = ""
+        previousLineChars = []
         showPreviousLine = false
         onNewLine = false
         isShowingDrawingHint = false
@@ -63,7 +76,10 @@ class SubtitleViewModel: ObservableObject {
         DispatchQueue.main.asyncAfter(deadline: .now() + fadeOut) { [weak self] in
             guard let self else { return }
             self.text = ""
+            self.animatedChars = []
+            self.nextCharID = 0
             self.previousLine = ""
+            self.previousLineChars = []
             self.showPreviousLine = false
             self.onNewLine = false
             self.isShowingDrawingHint = false
@@ -126,16 +142,25 @@ class SubtitleViewModel: ObservableObject {
         if isShowingDrawingHint {
             isShowingDrawingHint = false
             text = ""
+            animatedChars = []
         }
 
         // If we're on a new line and start typing, fade out the previous line
         if onNewLine && showPreviousLine {
-            showPreviousLine = false
+            withAnimation(.snappy(duration: 0.2)) {
+                showPreviousLine = false
+            }
         }
         onNewLine = false
 
         if text.count < config.config.behavior.charLimit {
             text += char
+            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                for c in char {
+                    animatedChars.append(AnimatedChar(id: nextCharID, character: String(c)))
+                    nextCharID += 1
+                }
+            }
         }
         resetIdleTimer()
     }
@@ -146,10 +171,14 @@ class SubtitleViewModel: ObservableObject {
 
         // Move current text to previous line, show it above
         if !text.isEmpty {
-            previousLine = text
-            showPreviousLine = true
-            text = ""
-            onNewLine = true
+            withAnimation(.snappy(duration: 0.2)) {
+                previousLine = text
+                previousLineChars = animatedChars
+                showPreviousLine = true
+                text = ""
+                animatedChars = []
+                onNewLine = true
+            }
         }
         resetIdleTimer()
     }
@@ -157,6 +186,11 @@ class SubtitleViewModel: ObservableObject {
     func handleBackspace() {
         guard isActive, !text.isEmpty else { return }
         text.removeLast()
+        withAnimation(.easeIn(duration: 0.15)) {
+            if !animatedChars.isEmpty {
+                animatedChars.removeLast()
+            }
+        }
         resetIdleTimer()
     }
 

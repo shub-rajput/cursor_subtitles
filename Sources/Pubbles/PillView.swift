@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 
 struct PillView: View {
     @ObservedObject var viewModel: SubtitleViewModel
@@ -88,12 +87,23 @@ struct PillView: View {
         VStack(alignment: .leading, spacing: 0) {
             // Previous line
             if viewModel.showPreviousLine {
-                Text(viewModel.previousLine)
-                    .font(textFont)
-                    .foregroundStyle(txtColor.opacity(0.5))
-                    .padding(.horizontal, style.paddingH)
-                    .padding(.top, style.paddingV)
-                    .padding(.bottom, style.paddingV / 2)
+                HStack(spacing: 0) {
+                    if !viewModel.previousLineChars.isEmpty {
+                        ForEach(viewModel.previousLineChars) { ac in
+                            Text(ac.character)
+                                .font(textFont)
+                                .foregroundStyle(txtColor.opacity(0.6))
+                        }
+                    } else {
+                        Text(viewModel.previousLine)
+                            .font(textFont)
+                            .foregroundStyle(txtColor.opacity(0.6))
+                    }
+                }
+                .padding(.horizontal, style.paddingH)
+                .padding(.top, style.paddingV)
+                .padding(.bottom, style.paddingV / 2)
+                .transition(.identity)
             }
 
             // Current line (or placeholder)
@@ -102,13 +112,23 @@ struct PillView: View {
                     Text(viewModel.displayText)
                         .font(textFont)
                         .foregroundStyle(txtColor.opacity(0.7))
-                } else if viewModel.text.isEmpty {
-                    // On new line, just show blinking cursor
+                } else if viewModel.animatedChars.isEmpty && viewModel.text.isEmpty {
                     Text(cursorVisible ? "|" : " ")
                         .font(cursorFont)
                         .foregroundStyle(txtColor)
+                } else if !viewModel.animatedChars.isEmpty {
+                    ForEach(viewModel.animatedChars) { ac in
+                        Text(ac.character)
+                            .font(textFont)
+                            .foregroundStyle(txtColor)
+                            .transition(CharTransition())
+                    }
+                    Text(cursorVisible && viewModel.isActive ? "|" : " ")
+                        .font(cursorFont)
+                        .foregroundStyle(txtColor)
                 } else {
-                    Text(viewModel.displayText)
+                    // Fallback for non-animated text (hints, etc.)
+                    Text(viewModel.text)
                         .font(textFont)
                         .foregroundStyle(txtColor)
                     + Text(cursorVisible && viewModel.isActive ? "|" : " ")
@@ -122,7 +142,6 @@ struct PillView: View {
         }
         .frame(maxWidth: style.maxWidth, alignment: .leading)
         .fixedSize()
-        .animation(.snappy(duration: 0.2), value: viewModel.text)
         .background {
             if !style.glassEffect {
                 pillBackground
@@ -150,6 +169,16 @@ struct PillView: View {
                 )
         )
         .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
+    }
+}
+
+private struct CharTransition: Transition {
+    func body(content: Content, phase: TransitionPhase) -> some View {
+        content
+            .opacity(phase == .willAppear ? 0 : 1)
+            .offset(y: phase == .willAppear ? 6 : 0)
+            .scaleEffect(phase == .willAppear ? 0.88 : 1)
+            .blur(radius: phase == .willAppear ? 4 : 0)
     }
 }
 
