@@ -49,6 +49,10 @@ struct PillContainerView: View {
         viewModel.activeScreenID == screenID
     }
 
+    private var drawingActive: Bool {
+        viewModel.isActive && viewModel.drawingModeEnabled && isActiveScreen
+    }
+
     var body: some View {
         ZStack(alignment: .topLeading) {
             Color.clear
@@ -76,10 +80,30 @@ struct PillContainerView: View {
                     .transition(.opacity)
             }
         }
+        .contentShape(Rectangle())
+        .allowsHitTesting(drawingActive)
+        .gesture(drawingGesture)
         .animation(viewModel.isVisible && isActiveScreen
             ? .smooth(duration: fadeIn)
             : .easeOut(duration: fadeOut),
             value: viewModel.isVisible && isActiveScreen
         )
+    }
+
+    private var drawingGesture: some Gesture {
+        DragGesture(minimumDistance: 0)
+            .onChanged { value in
+                let point = NSPoint(x: value.location.x, y: value.location.y)
+                // Update cursor position so pill follows during drawing
+                viewModel.cursorPosition = point
+                if viewModel.currentStroke.isEmpty {
+                    viewModel.startStroke(at: point)
+                } else {
+                    viewModel.continueStroke(to: point)
+                }
+            }
+            .onEnded { _ in
+                viewModel.endStroke()
+            }
     }
 }
