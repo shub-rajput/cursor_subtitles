@@ -8,6 +8,7 @@ struct PillView: View {
     private let blinkPublisher = Timer.publish(every: 0.53, on: .main, in: .common).autoconnect()
 
     private var style: StyleConfig { configManager.config.style }
+    private var scale: CGFloat { style.pillScale }
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
 
@@ -61,24 +62,27 @@ struct PillView: View {
         return Self.weightOrder[idx - 1]
     }
 
+    private var scaledFontSize: CGFloat { style.fontSize * scale }
+
     private var textFont: Font {
         if style.fontFamily == "system" {
-            return .system(size: style.fontSize, weight: parsedWeight)
+            return .system(size: scaledFontSize, weight: parsedWeight)
         }
-        return .custom(style.fontFamily, size: style.fontSize)
+        return .custom(style.fontFamily, size: scaledFontSize)
     }
     private var cursorFont: Font {
         if style.fontFamily == "system" {
-            return .system(size: style.fontSize, weight: cursorWeight)
+            return .system(size: scaledFontSize, weight: cursorWeight)
         }
-        return .custom(style.fontFamily, size: style.fontSize)
+        return .custom(style.fontFamily, size: scaledFontSize)
     }
     private var pillShape: UnevenRoundedRectangle {
-        UnevenRoundedRectangle(
-            topLeadingRadius: style.pointerCorner ? 2 : style.cornerRadius,
-            bottomLeadingRadius: style.cornerRadius,
-            bottomTrailingRadius: style.cornerRadius,
-            topTrailingRadius: style.cornerRadius,
+        let r = style.cornerRadius * scale
+        return UnevenRoundedRectangle(
+            topLeadingRadius: style.pointerCorner ? 2 * scale : r,
+            bottomLeadingRadius: r,
+            bottomTrailingRadius: r,
+            topTrailingRadius: r,
             style: .continuous
         )
     }
@@ -100,9 +104,9 @@ struct PillView: View {
                             .foregroundStyle(txtColor.opacity(0.6))
                     }
                 }
-                .padding(.horizontal, style.paddingH)
-                .padding(.top, style.paddingV)
-                .padding(.bottom, style.paddingV / 2)
+                .padding(.horizontal, style.paddingH * scale)
+                .padding(.top, style.paddingV * scale)
+                .padding(.bottom, style.paddingV * scale / 2)
                 .transition(.identity)
             }
 
@@ -136,11 +140,11 @@ struct PillView: View {
                         .foregroundStyle(txtColor)
                 }
             }
-            .padding(.horizontal, style.paddingH)
-            .padding(.top, viewModel.showPreviousLine ? style.paddingV / 2 : style.paddingV)
-            .padding(.bottom, style.paddingV)
+            .padding(.horizontal, style.paddingH * scale)
+            .padding(.top, viewModel.showPreviousLine ? style.paddingV * scale / 2 : style.paddingV * scale)
+            .padding(.bottom, style.paddingV * scale)
         }
-        .frame(maxWidth: style.maxWidth, alignment: .leading)
+        .frame(maxWidth: style.maxWidth * scale, alignment: .leading)
         .fixedSize()
         .background {
             if !style.glassEffect {
@@ -156,16 +160,16 @@ struct PillView: View {
         .shadow(
             color: (Color(hex: style.shadowColor) ?? .black)
                 .opacity(style.shadowOpacity),
-            radius: style.shadowRadius,
-            x: style.shadowX,
-            y: style.shadowY
+            radius: style.shadowRadius * scale,
+            x: style.shadowX * scale,
+            y: style.shadowY * scale
         )
         .overlay(
             pillShape
                 .strokeBorder(
                     (Color(hex: style.borderColor) ?? .white)
                         .opacity(style.borderOpacity),
-                    lineWidth: style.borderWidth
+                    lineWidth: style.borderWidth * scale
                 )
         )
         .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
@@ -174,11 +178,16 @@ struct PillView: View {
 
 private struct CharTransition: Transition {
     func body(content: Content, phase: TransitionPhase) -> some View {
+        let offsetY: CGFloat = switch phase {
+        case .willAppear: 6
+        case .identity: 0
+        case .didDisappear: -6
+        }
         content
-            .opacity(phase == .willAppear ? 0 : 1)
-            .offset(y: phase == .willAppear ? 6 : 0)
-            .scaleEffect(phase == .willAppear ? 0.88 : 1)
-            .blur(radius: phase == .willAppear ? 4 : 0)
+            .opacity(phase.isIdentity ? 1 : 0)
+            .offset(y: offsetY)
+            .scaleEffect(phase.isIdentity ? 1 : 0.88)
+            .blur(radius: phase.isIdentity ? 0 : 4)
     }
 }
 

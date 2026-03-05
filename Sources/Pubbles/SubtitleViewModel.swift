@@ -175,10 +175,11 @@ class SubtitleViewModel: ObservableObject {
                 previousLine = text
                 previousLineChars = animatedChars
                 showPreviousLine = true
-                text = ""
-                animatedChars = []
                 onNewLine = true
             }
+            // Outside withAnimation so chars vanish instantly (no exit transition)
+            text = ""
+            animatedChars = []
         }
         resetIdleTimer()
     }
