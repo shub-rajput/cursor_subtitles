@@ -2,14 +2,8 @@ import SwiftUI
 
 struct DrawingCanvasView: View {
     @ObservedObject var viewModel: SubtitleViewModel
-    @ObservedObject private var configManager = ConfigManager.shared
-
-    private var lineColor: Color {
-        Color(hex: configManager.config.style.drawingLineColor) ?? .red
-    }
-    private var lineWidth: CGFloat {
-        configManager.config.style.drawingLineWidth
-    }
+    let lineColor: Color
+    let lineWidth: CGFloat
 
     var body: some View {
         // TimelineView polls currentStroke at display refresh rate while drawing.
@@ -44,6 +38,8 @@ struct PillContainerView: View {
 
     private var fadeIn: Double { configManager.config.behavior.fadeInDuration }
     private var fadeOut: Double { configManager.config.behavior.fadeOutDuration }
+    private var lineColor: Color { Color(hex: configManager.config.style.drawingLineColor) ?? .red }
+    private var lineWidth: CGFloat { configManager.config.style.drawingLineWidth }
 
     private var isActiveScreen: Bool {
         viewModel.activeScreenID == screenID
@@ -59,8 +55,18 @@ struct PillContainerView: View {
 
             // Drawing canvas (renders on active screen when strokes exist and pill is visible)
             if viewModel.isVisible && isActiveScreen && (!viewModel.strokes.isEmpty || viewModel.isDrawing) {
-                DrawingCanvasView(viewModel: viewModel)
+                DrawingCanvasView(viewModel: viewModel, lineColor: lineColor, lineWidth: lineWidth)
                     .transition(.opacity)
+            }
+
+            // Cursor dot indicator when drawing mode is active
+            if drawingActive {
+                Circle()
+                    .fill(lineColor)
+                    .frame(width: max(lineWidth * 2, 8), height: max(lineWidth * 2, 8))
+                    .shadow(color: lineColor.opacity(0.5), radius: 3)
+                    .position(x: viewModel.cursorPosition.x, y: viewModel.cursorPosition.y)
+                    .allowsHitTesting(false)
             }
 
             if viewModel.isVisible && isActiveScreen {
