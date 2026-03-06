@@ -68,6 +68,9 @@ Enable drawing from the menubar **Drawing** toggle. When enabled:
 - Drawing resets the idle timer — strokes and pill fade together
 - Customize line color and width via `style.drawingLineColor` and `style.drawingLineWidth` in config
 
+### Menubar Settings
+<img width="1000" height="590" alt="CleanShot 2026-03-06 at 22 48 35" src="https://github.com/user-attachments/assets/7587098e-7097-47af-becd-a17614c2d8da" />
+
 ### Keyboard Shortcuts
 
 While the pill is active:
