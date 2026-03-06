@@ -2,9 +2,15 @@
 
 # Pubbles
 
-Subtitle bubbles for your pointer. A lightweight macOS menubar app that displays text bubbles below the pointer when enabled. Perfect for real-time context while screen recording. Requires **macOS 14.0+** (Sonoma or later).
+
+Subtitle bubbles for your pointer. A lightweight macOS menubar app that displays text bubbles below the pointer when enabled. Perfect for real-time context while screen recording for support, feedback and more! Requires **macOS 14.0+** (Sonoma or later).
+
+
+![GH intro small](https://github.com/user-attachments/assets/96bee091-cb90-45b8-a058-9ccbdb3e4024)
+
 
 <a href='https://ko-fi.com/U7U11CXDRK' target='_blank'><img height='42' style='border:0px;height:42px;' src='https://storage.ko-fi.com/cdn/kofi1.png?v=6' border='0' alt='Buy Me a Coffee at ko-fi.com' /></a>
+
 
 
 ## Install
