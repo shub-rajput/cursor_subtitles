@@ -121,13 +121,18 @@ struct PillView: View {
                         .font(cursorFont)
                         .foregroundStyle(txtColor)
                 } else if !viewModel.animatedChars.isEmpty {
+                    let editID = viewModel.editingCharID
                     ForEach(viewModel.animatedChars) { ac in
                         Text(ac.character)
                             .font(textFont)
                             .foregroundStyle(txtColor)
                             .transition(CharTransition())
+                            .anchorPreference(key: EditCursorAnchorKey.self, value: .leading) {
+                                ac.id == editID ? $0 : nil
+                            }
                     }
-                    Text(cursorVisible && viewModel.isActive ? "|" : " ")
+                    // End-of-line cursor: visible only when cursor is at end
+                    Text(cursorVisible && viewModel.isActive && editID == nil ? "|" : " ")
                         .font(cursorFont)
                         .foregroundStyle(txtColor)
                 } else {
@@ -143,6 +148,18 @@ struct PillView: View {
             .padding(.horizontal, style.paddingH * scale)
             .padding(.top, viewModel.showPreviousLine ? style.paddingV * scale / 2 : style.paddingV * scale)
             .padding(.bottom, style.paddingV * scale)
+            .overlayPreferenceValue(EditCursorAnchorKey.self) { anchor in
+                if let anchor, viewModel.isActive {
+                    GeometryReader { proxy in
+                        let pt = proxy[anchor]
+                        Text(cursorVisible ? "|" : " ")
+                            .font(cursorFont)
+                            .foregroundStyle(txtColor)
+                            .fixedSize()
+                            .position(x: pt.x, y: pt.y)
+                    }
+                }
+            }
         }
         .frame(maxWidth: style.maxWidth * scale, alignment: .leading)
         .fixedSize()
@@ -173,6 +190,14 @@ struct PillView: View {
                 )
         )
         .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
+        .onChange(of: viewModel.textCursorIndex) { _, _ in cursorVisible = true }
+    }
+}
+
+private struct EditCursorAnchorKey: PreferenceKey {
+    nonisolated(unsafe) static var defaultValue: Anchor<CGPoint>?
+    static func reduce(value: inout Anchor<CGPoint>?, nextValue: () -> Anchor<CGPoint>?) {
+        value = value ?? nextValue()
     }
 }
 

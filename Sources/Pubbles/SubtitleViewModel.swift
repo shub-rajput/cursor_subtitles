@@ -31,6 +31,8 @@ class SubtitleViewModel: ObservableObject {
 
     @Published var animatedChars: [AnimatedChar] = []
     private var nextCharID = 0
+    /// Cursor position for arrow key editing (0 = before first char, text.count = end)
+    @Published var textCursorIndex: Int = 0
 
     var config: ConfigManager { ConfigManager.shared }
 
@@ -40,6 +42,12 @@ class SubtitleViewModel: ObservableObject {
     }
 
     var isPlaceholder: Bool { text.isEmpty && !onNewLine && isActive }
+
+    /// ID of the char at cursor position (for overlay cursor placement), nil when cursor is at end
+    var editingCharID: Int? {
+        guard textCursorIndex < animatedChars.count else { return nil }
+        return animatedChars[textCursorIndex].id
+    }
 
     private var idleTimer: Timer?
 
@@ -58,6 +66,7 @@ class SubtitleViewModel: ObservableObject {
         text = ""
         animatedChars = []
         nextCharID = 0
+        textCursorIndex = 0
         previousLine = ""
         previousLineChars = []
         showPreviousLine = false
@@ -78,6 +87,7 @@ class SubtitleViewModel: ObservableObject {
             self.text = ""
             self.animatedChars = []
             self.nextCharID = 0
+            self.textCursorIndex = 0
             self.previousLine = ""
             self.previousLineChars = []
             self.showPreviousLine = false
@@ -125,12 +135,22 @@ class SubtitleViewModel: ObservableObject {
         onNewLine = false
 
         if text.count < config.config.behavior.charLimit {
-            text += char
-            withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
-                for c in char {
-                    animatedChars.append(AnimatedChar(id: nextCharID, character: String(c)))
-                    nextCharID += 1
+            let atEnd = textCursorIndex >= text.count
+            let insertIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
+            text.insert(contentsOf: char, at: insertIdx)
+            textCursorIndex += char.count
+
+            if atEnd {
+                // Normal typing at end — use original animated append
+                withAnimation(.spring(duration: 0.25, bounce: 0.1)) {
+                    for c in char {
+                        animatedChars.append(AnimatedChar(id: nextCharID, character: String(c)))
+                        nextCharID += 1
+                    }
                 }
+            } else {
+                // Mid-text insert — rebuild chars instantly
+                rebuildAnimatedChars()
             }
         }
         resetIdleTimer()
@@ -151,19 +171,52 @@ class SubtitleViewModel: ObservableObject {
             // Outside withAnimation so chars vanish instantly (no exit transition)
             text = ""
             animatedChars = []
+            textCursorIndex = 0
         }
         resetIdleTimer()
     }
 
     func handleBackspace() {
-        guard isActive, !text.isEmpty else { return }
-        text.removeLast()
-        withAnimation(.easeIn(duration: 0.15)) {
-            if !animatedChars.isEmpty {
-                animatedChars.removeLast()
+        guard isActive, !text.isEmpty, textCursorIndex > 0 else { return }
+        let atEnd = textCursorIndex >= text.count
+
+        let removeIdx = text.index(text.startIndex, offsetBy: textCursorIndex - 1)
+        text.remove(at: removeIdx)
+        textCursorIndex -= 1
+
+        if atEnd {
+            // Deleting from end — use original animated removeLast
+            withAnimation(.easeIn(duration: 0.15)) {
+                if !animatedChars.isEmpty {
+                    animatedChars.removeLast()
+                }
             }
+        } else {
+            // Mid-text delete — rebuild chars instantly
+            rebuildAnimatedChars()
         }
         resetIdleTimer()
+    }
+
+    func handleArrowLeft() {
+        guard isActive, textCursorIndex > 0 else { return }
+        textCursorIndex -= 1
+        resetIdleTimer()
+    }
+
+    func handleArrowRight() {
+        guard isActive, textCursorIndex < text.count else { return }
+        textCursorIndex += 1
+        resetIdleTimer()
+    }
+
+    /// Rebuilds animatedChars from text without animation (for mid-text edits)
+    private func rebuildAnimatedChars() {
+        animatedChars = text.map { c in
+            let ac = AnimatedChar(id: nextCharID, character: String(c))
+            nextCharID += 1
+            return ac
+        }
     }
 
     func startStroke(at point: NSPoint) {

@@ -173,6 +173,20 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
+        // Arrow keys for cursor movement
+        if keyCode == 123 { // Left arrow
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self.viewModel.handleArrowLeft() }
+            }
+            return nil
+        }
+        if keyCode == 124 { // Right arrow
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self.viewModel.handleArrowRight() }
+            }
+            return nil
+        }
+
         // Escape
         if keyCode == 53 {
             DispatchQueue.main.async {
