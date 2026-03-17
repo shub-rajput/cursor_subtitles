@@ -25,6 +25,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 self?.viewModel.showOnboarding()
             }
         }
+
+        UpdateChecker.shared.onUpdateStatusChanged = { [weak self] in
+            self?.statusItem.menu = self?.buildMenu()
+        }
+        UpdateChecker.shared.checkForUpdates()
     }
 
     private func setupMenubar() {
@@ -72,6 +77,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "About", action: #selector(showAbout), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Hotkeys", action: #selector(showKeyboardShortcuts), keyEquivalent: ""))
+        menu.addItem(NSMenuItem.separator())
+
+        if UpdateChecker.shared.updateAvailable, let latest = UpdateChecker.shared.latestVersion {
+            let updateItem = NSMenuItem(title: "Update Available (\(latest))", action: #selector(checkForUpdates), keyEquivalent: "")
+            menu.addItem(updateItem)
+        } else {
+            menu.addItem(NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdates), keyEquivalent: ""))
+        }
+
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         return menu
     }
@@ -224,6 +238,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         alert.addButton(withTitle: "OK")
         NSApp.activate(ignoringOtherApps: true)
         alert.runModal()
+    }
+
+    @objc private func checkForUpdates() {
+        if UpdateChecker.shared.updateAvailable {
+            UpdateChecker.shared.promptAndUpdate()
+        } else {
+            UpdateChecker.shared.checkForUpdates(silent: false)
+        }
     }
 
     @objc private func quitApp() {
