@@ -6,6 +6,7 @@ class UpdateChecker {
 
     private let repo = "shub-rajput/pubbles"
     private let installScriptURL = "https://raw.githubusercontent.com/shub-rajput/pubbles/main/scripts/install.sh"
+    private let skippedVersionKey = "skippedUpdateVersion"
 
     private(set) var latestVersion: String?
     private(set) var updateAvailable = false
@@ -47,7 +48,12 @@ class UpdateChecker {
                 self?.updateAvailable = self?.isNewer(remote: remote) ?? false
                 self?.onUpdateStatusChanged?()
 
-                if !silent && !(self?.updateAvailable ?? false) {
+                if self?.updateAvailable == true {
+                    let skipped = UserDefaults.standard.string(forKey: self?.skippedVersionKey ?? "")
+                    if !silent || skipped != remote {
+                        self?.promptAndUpdate()
+                    }
+                } else if !silent {
                     self?.showUpToDate()
                 }
             }
@@ -62,21 +68,48 @@ class UpdateChecker {
         alert.informativeText = "Pubbles \(latest) is available (you have \(currentVersion)).\n\nThis will quit the app, install the update, and relaunch."
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Update Now")
+        alert.addButton(withTitle: "Skip This Version")
         alert.addButton(withTitle: "Later")
         NSApp.activate(ignoringOtherApps: true)
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
             runInstallScript()
+        } else if response == .alertSecondButtonReturn {
+            UserDefaults.standard.set(latest, forKey: skippedVersionKey)
         }
     }
 
     private func runInstallScript() {
+        // Write a temporary script to /tmp (outside app sandbox)
+        let scriptPath = "/tmp/pubbles_update.sh"
+        let script = """
+        #!/bin/bash
+        sleep 1
+        curl -fsSL '\(installScriptURL)' -o /tmp/pubbles_install.sh
+        chmod +x /tmp/pubbles_install.sh
+        /bin/bash /tmp/pubbles_install.sh
+        rm -f /tmp/pubbles_install.sh \(scriptPath)
+        """
+        try? script.write(toFile: scriptPath, atomically: true, encoding: .utf8)
+
+        // Use open(1) to launch the script as a fully independent process
+        // open -a with bash won't work, but open -jg with a script does not either
+        // The reliable way: use launchctl to submit a one-shot job
         let process = Process()
-        process.executableURL = URL(fileURLWithPath: "/bin/bash")
-        process.arguments = ["-c", "curl -fsSL '\(installScriptURL)' | bash"]
-        process.qualityOfService = .userInitiated
+        process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
+        process.arguments = [
+            "submit", "-l", "com.pubbles.update",
+            "--", "/bin/bash", scriptPath
+        ]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
         try? process.run()
+
+        // Quit ourselves so the install script can replace the app
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            NSApp.terminate(nil)
+        }
     }
 
     private func isNewer(remote: String) -> Bool {
