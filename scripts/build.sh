@@ -39,8 +39,8 @@ fi
 echo "Built ${APP_NAME}.app v${VERSION}"
 
 # Create release zip (clean, no __MACOSX or ._* junk)
-ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}.zip"
-echo "Packaged ${APP_NAME}.zip for release"
+ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}_${VERSION}.zip"
+echo "Packaged ${APP_NAME}_${VERSION}.zip for release"
 
 # Relaunch
 if security find-identity -v -p codesigning 2>/dev/null | grep -q "Pubbles"; then
