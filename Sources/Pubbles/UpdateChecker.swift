@@ -93,9 +93,7 @@ class UpdateChecker {
         """
         try? script.write(toFile: scriptPath, atomically: true, encoding: .utf8)
 
-        // Use open(1) to launch the script as a fully independent process
-        // open -a with bash won't work, but open -jg with a script does not either
-        // The reliable way: use launchctl to submit a one-shot job
+        // Launch as a detached launchd job so it survives app termination
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/launchctl")
         process.arguments = [
