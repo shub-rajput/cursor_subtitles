@@ -34,10 +34,9 @@ curl -fsSL https://raw.githubusercontent.com/shub-rajput/pubbles/main/scripts/in
 Download the latest `.zip` from [Releases](https://github.com/shub-rajput/pubbles/releases), unzip, and move `Pubbles.app` to `/Applications`.
 
 > [!NOTE]
-> **Gatekeeper warning?** macOS blocks apps from unidentified developers by default. Fix it with one of these:
-> - **Right-click method (easiest):** Right-click `Pubbles.app` → **Open** → click **Open** in the dialog. You only need to do this once.
-> - **Terminal:** `xattr -cr /Applications/Pubbles.app`
-> - **System Settings:** System Settings → Privacy & Security → scroll down → click **Open Anyway**
+>macOS might show a warning and ask you to trash the app.
+>That's because I haven't paid Apple $99/yr for the privilege of being a "verified" developer :) [(donate to support!)](https://ko-fi.com/shubhangrajput)
+>Just close the prompt, then go to Settings > Privacy & Security > scroll down and click "Open Anyway"
 
 ### Build from Source
 
