@@ -8,6 +8,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var eventManager: EventManager!
     private var cursorTracker: CursorTracker!
     private var isEnabled = true
+    private var settingsWindowController: SettingsWindowController!
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         overlayController = OverlayController(viewModel: viewModel)
@@ -15,6 +16,8 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         cursorTracker = CursorTracker(viewModel: viewModel)
 
         setupMenubar()
+        settingsWindowController = SettingsWindowController()
+        settingsWindowController.showWindow()
         overlayController.show()
         eventManager.start()
         cursorTracker.start()
@@ -72,6 +75,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(themeItem)
 
         menu.addItem(NSMenuItem.separator())
+        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ""))
         menu.addItem(NSMenuItem(title: "Edit Config...", action: #selector(openConfig), keyEquivalent: ","))
         menu.addItem(NSMenuItem(title: "Reset Config", action: #selector(resetConfig), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
@@ -246,6 +250,15 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         } else {
             UpdateChecker.shared.checkForUpdates(silent: false)
         }
+    }
+
+    @objc private func openSettings() {
+        settingsWindowController.showWindow()
+    }
+
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        settingsWindowController.showWindow()
+        return true
     }
 
     @objc private func quitApp() {
