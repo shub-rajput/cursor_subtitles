@@ -146,7 +146,12 @@ struct StyleSettingsView: View {
                 }
             }
 
-            ColorPicker("Text Color", selection: textColorBinding, supportsOpacity: false)
+            HStack {
+                Text("Text Color")
+                Spacer()
+                ColorPicker("", selection: textColorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
 
             Picker("Font Size", selection: fontSizePickerBinding) {
                 ForEach([10, 12, 14, 16, 18, 20, 24], id: \.self) { size in
@@ -176,7 +181,12 @@ struct StyleSettingsView: View {
 
     private var borderSection: some View {
         Section("Border") {
-            ColorPicker("Border Color", selection: borderColorBinding, supportsOpacity: false)
+            HStack {
+                Text("Border Color")
+                Spacer()
+                ColorPicker("", selection: borderColorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
 
             Picker("Border Width", selection: borderWidthPickerBinding) {
                 ForEach([0, 1, 2, 3, 4], id: \.self) { w in
@@ -198,7 +208,12 @@ struct StyleSettingsView: View {
 
     private var shadowSection: some View {
         Section("Shadow") {
-            ColorPicker("Shadow Color", selection: shadowColorBinding, supportsOpacity: false)
+            HStack {
+                Text("Shadow Color")
+                Spacer()
+                ColorPicker("", selection: shadowColorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
 
             HStack {
                 Text("Opacity")
@@ -242,7 +257,12 @@ struct StyleSettingsView: View {
 
     private var drawingSection: some View {
         Section("Drawing") {
-            ColorPicker("Line Color", selection: drawingColorBinding, supportsOpacity: false)
+            HStack {
+                Text("Line Color")
+                Spacer()
+                ColorPicker("", selection: drawingColorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
 
             Picker("Line Width", selection: drawingLineWidthPickerBinding) {
                 ForEach([1, 2, 3, 4, 5], id: \.self) { w in
