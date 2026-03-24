@@ -326,9 +326,9 @@ class GradientPickerView: NSView {
     private var selectedIndex: Int?
     private var colorObserver: Any?
 
-    private let barHeight: CGFloat = 20
-    private let handleWidth: CGFloat = 10
-    private let handleHeight: CGFloat = 24
+    private let barHeight: CGFloat = 14
+    private let handleWidth: CGFloat = 8
+    private let handleHeight: CGFloat = 20
 
     override var acceptsFirstResponder: Bool { true }
     override var isFlipped: Bool { true }

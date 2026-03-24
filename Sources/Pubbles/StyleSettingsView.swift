@@ -104,41 +104,46 @@ struct StyleSettingsView: View {
 
     private var appearanceSection: some View {
         Section("Appearance") {
-            // Bubble Background — color picker + solid/gradient toggle
-            HStack {
-                Text("Bubble Background")
-                Spacer()
-                Picker("", selection: Binding(
-                    get: { hasGradient ? 1 : 0 },
-                    set: { newValue in
-                        if newValue == 1 {
-                            let base = style.backgroundColor
-                            configManager.setStyleValue("backgroundGradient", [base, base])
-                        } else {
-                            configManager.removeStyleValue("backgroundGradient")
+            if !style.glassEffect {
+                HStack {
+                    Text("Bubble Background")
+                    Spacer()
+                    Picker("", selection: Binding(
+                        get: { hasGradient ? 1 : 0 },
+                        set: { newValue in
+                            if newValue == 1 {
+                                let base = style.backgroundColor
+                                configManager.setStyleValue("backgroundGradient", [base, base])
+                            } else {
+                                configManager.removeStyleValue("backgroundGradient")
+                            }
                         }
+                    )) {
+                        Text("Solid").tag(0)
+                        Text("Gradient").tag(1)
                     }
-                )) {
-                    Text("Solid").tag(0)
-                    Text("Gradient").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 120)
+                    .labelsHidden()
+                    .fixedSize()
 
-                if !hasGradient {
-                    ColorPicker("", selection: bgColorBinding, supportsOpacity: false)
-                        .labelsHidden()
+                    if !hasGradient {
+                        ColorPicker("", selection: bgColorWithOpacityBinding, supportsOpacity: true)
+                            .labelsHidden()
+                    }
                 }
-            }
 
-            if hasGradient {
-                GradientPicker(
-                    colors: Binding(
-                        get: { style.backgroundGradient ?? [] },
-                        set: { configManager.setStyleValue("backgroundGradient", $0) }
-                    )
-                )
-                .frame(height: 30)
+                if hasGradient {
+                    HStack {
+                        Text("Gradient")
+                        Spacer()
+                        GradientPicker(
+                            colors: Binding(
+                                get: { style.backgroundGradient ?? [] },
+                                set: { configManager.setStyleValue("backgroundGradient", $0) }
+                            )
+                        )
+                        .frame(width: 200, height: 22)
+                    }
+                }
             }
 
             ColorPicker("Text Color", selection: textColorBinding, supportsOpacity: false)
@@ -253,6 +258,22 @@ struct StyleSettingsView: View {
         Binding(
             get: { Color(hex: style.backgroundColor) ?? .blue },
             set: { configManager.setColor($0.toHex()) }
+        )
+    }
+
+    private var bgColorWithOpacityBinding: Binding<Color> {
+        Binding(
+            get: {
+                (Color(hex: style.backgroundColor) ?? .blue)
+                    .opacity(style.backgroundOpacity)
+            },
+            set: { newColor in
+                let nsColor = NSColor(newColor)
+                let opacity = Double(nsColor.alphaComponent)
+                let opaque = nsColor.withAlphaComponent(1.0)
+                configManager.setColor(Color(opaque).toHex())
+                configManager.setStyleValue("backgroundOpacity", opacity)
+            }
         )
     }
 
