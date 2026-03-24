@@ -75,6 +75,7 @@ struct StyleSettingsView: View {
         }
         .padding(20)
         .background(.quaternary.opacity(0.5))
+        .clipped()
     }
 
     private var currentThemeName: String {
