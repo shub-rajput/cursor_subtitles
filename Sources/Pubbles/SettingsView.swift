@@ -1,349 +1,88 @@
 import SwiftUI
 
-struct SettingsView: View {
-    @ObservedObject private var configManager = ConfigManager.shared
+enum SettingsTab: String, CaseIterable, Identifiable {
+    case style = "Style"
+    case hotkeys = "Hotkeys"
+    case settings = "Settings"
+    case about = "About"
 
-    private var style: StyleConfig { configManager.config.style }
-    private var behavior: BehaviorConfig { configManager.config.behavior }
+    var id: String { rawValue }
+
+    var icon: String {
+        switch self {
+        case .style: "paintpalette.fill"
+        case .hotkeys: "keyboard.fill"
+        case .settings: "gearshape.fill"
+        case .about: "info.circle.fill"
+        }
+    }
+
+}
+
+struct SettingsView: View {
+    @State private var selectedTab: SettingsTab = .style
 
     var body: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                headerSection
-                previewSection
-                themeSection
-                colorSection
-                drawingSection
-                styleSection
-                behaviorSection
-                footerSection
-            }
-            .padding(20)
+        NavigationSplitView {
+            sidebar
+                .navigationSplitViewColumnWidth(min: 180, ideal: 200, max: 200)
+        } detail: {
+            detailView
         }
-        .frame(width: 420, height: 600)
-        .background(Color(nsColor: .windowBackgroundColor))
     }
 
-    // MARK: - Header
-
-    private var headerSection: some View {
-        HStack {
-            VStack(alignment: .leading, spacing: 2) {
+    private var sidebar: some View {
+        List(SettingsTab.allCases, selection: $selectedTab) { tab in
+            Label(tab.rawValue, systemImage: tab.icon)
+                .tag(tab)
+        }
+        .listStyle(.sidebar)
+        .safeAreaInset(edge: .bottom) {
+            VStack(spacing: 6) {
                 Text("Pubbles")
-                    .font(.title.bold())
-                Text("v\(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .font(.headline)
+                Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
+                    .font(.caption2)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(.quaternary)
+                    .clipShape(Capsule())
             }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+        }
+    }
+
+    @ViewBuilder
+    private var detailView: some View {
+        switch selectedTab {
+        case .style:
+            StyleSettingsView()
+        case .hotkeys:
+            placeholderView("Hotkeys")
+        case .settings:
+            GeneralSettingsView()
+        case .about:
+            placeholderView("About")
+        }
+    }
+
+    private func placeholderView(_ title: String) -> some View {
+        VStack {
+            Spacer()
+            Text("\(title) — Coming Soon")
+                .font(.title3)
+                .foregroundStyle(.secondary)
             Spacer()
         }
-    }
-
-    // MARK: - Preview
-
-    private var previewSection: some View {
-        VStack(spacing: 8) {
-            PillPreview(style: style)
-            shortcutRow
-        }
-        .frame(maxWidth: .infinity)
-        .padding(.vertical, 12)
-    }
-
-    private var shortcutRow: some View {
-        HotkeyRecorder(
-            hotkey: configManager.config.hotkey,
-            onSave: { configManager.setHotkey($0) }
-        )
-    }
-
-    // MARK: - Themes
-
-    private var themeSection: some View {
-        SectionBox("Theme") {
-            let themes = configManager.availableThemes()
-            let currentTheme = configManager.config.theme
-
-            VStack(alignment: .leading, spacing: 8) {
-                FlowLayout(spacing: 6) {
-                    themeChip("Default", isSelected: currentTheme == nil) {
-                        configManager.setTheme(nil)
-                    }
-                    ForEach(themes, id: \.filename) { theme in
-                        themeChip(theme.name, isSelected: currentTheme == theme.filename) {
-                            configManager.setTheme(theme.filename)
-                        }
-                    }
-                }
-
-                if currentTheme != nil {
-                    Button("Reset to theme defaults") {
-                        configManager.resetStyleOverrides()
-                    }
-                    .font(.caption)
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                }
-            }
-        }
-    }
-
-    private func themeChip(_ name: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            Text(name)
-                .font(.caption)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
-                .foregroundStyle(isSelected ? .white : .primary)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-        }
-        .buttonStyle(.plain)
-    }
-
-    // MARK: - Colors
-
-    private var hasGradient: Bool {
-        if let g = style.backgroundGradient, g.count >= 2 { return true }
-        return false
-    }
-
-    private var colorSection: some View {
-        SectionBox("Colors") {
-            VStack(alignment: .leading, spacing: 12) {
-                if configManager.config.theme == nil {
-                    colorPresets
-                }
-
-                // Solid / Gradient picker
-                Picker("Background", selection: Binding(
-                    get: { hasGradient ? 1 : 0 },
-                    set: { newValue in
-                        if newValue == 1 {
-                            // Switch to gradient — seed from current bg color
-                            let base = style.backgroundColor
-                            configManager.setStyleValue("backgroundGradient", [base, base])
-                        } else {
-                            // Switch to solid — remove gradient
-                            configManager.removeStyleValue("backgroundGradient")
-                        }
-                    }
-                )) {
-                    Text("Solid").tag(0)
-                    Text("Gradient").tag(1)
-                }
-                .pickerStyle(.segmented)
-                .frame(width: 160)
-
-                if hasGradient {
-                    gradientColorPickers
-                } else {
-                    HStack {
-                        Text("Bubble")
-                            .frame(width: 80, alignment: .leading)
-                        ColorPicker("", selection: bgColorBinding, supportsOpacity: false)
-                            .labelsHidden()
-                    }
-                }
-
-                HStack {
-                    Text("Text")
-                        .frame(width: 80, alignment: .leading)
-                    ColorPicker("", selection: textColorBinding, supportsOpacity: false)
-                        .labelsHidden()
-                }
-            }
-        }
-    }
-
-    private var gradientColorPickers: some View {
-        GradientPicker(
-            colors: Binding(
-                get: { style.backgroundGradient ?? [] },
-                set: { configManager.setStyleValue("backgroundGradient", $0) }
-            )
-        )
-    }
-
-    private var colorPresets: some View {
-        let presets: [(String, String)] = [
-            ("Blue", "#256CEF"), ("Red", "#991B1B"), ("Green", "#16A34A"), ("Yellow", "#E6AE00"),
-            ("Pink", "#DB2777"), ("Purple", "#7C3AED"), ("Orange", "#D97706"), ("Slate", "#0F172A"),
-        ]
-        let currentColor = style.backgroundColor.uppercased()
-
-        return HStack(spacing: 6) {
-            ForEach(presets, id: \.1) { name, hex in
-                Button {
-                    configManager.setTheme(nil)
-                    configManager.setColor(hex)
-                } label: {
-                    Circle()
-                        .fill(Color(hex: hex) ?? .gray)
-                        .frame(width: 22, height: 22)
-                        .overlay {
-                            if currentColor == hex.uppercased() {
-                                Circle().strokeBorder(.white, lineWidth: 2)
-                            }
-                        }
-                }
-                .buttonStyle(.plain)
-                .help(name)
-            }
-        }
-    }
-
-    // MARK: - Drawing
-
-    private var drawingSection: some View {
-        SectionBox("Drawing") {
-            VStack(alignment: .leading, spacing: 10) {
-                HStack {
-                    Text("Drawing color")
-                        .frame(width: 100, alignment: .leading)
-                    ColorPicker("", selection: drawingColorBinding, supportsOpacity: false)
-                        .labelsHidden()
-                }
-                sliderWithField("Line width", value: drawingLineWidthBinding, range: 1...10, step: 1)
-            }
-        }
-    }
-
-    // MARK: - Style
-
-    private var styleSection: some View {
-        SectionBox("Style") {
-            VStack(alignment: .leading, spacing: 10) {
-                sliderWithField("Font size", value: fontSizeBinding, range: 8...32, step: 1)
-                sliderWithField("Max width", value: maxWidthBinding, range: 150...600, step: 10)
-                sliderWithField("Char limit", value: charLimitBinding, range: 10...100, step: 5)
-            }
-        }
-    }
-
-    // MARK: - Behavior
-
-    private var behaviorSection: some View {
-        SectionBox("Behavior") {
-            sliderWithField("Idle timeout", value: idleTimeoutBinding, range: 1...30, step: 1, suffix: "s")
-        }
-    }
-
-    private func sliderWithField(
-        _ label: String,
-        value: Binding<Double>,
-        range: ClosedRange<Double>,
-        step: Double,
-        suffix: String = ""
-    ) -> some View {
-        HStack {
-            Text(label)
-                .frame(width: 100, alignment: .leading)
-            Slider(value: value, in: range, step: step)
-            TextField("", value: value, format: .number)
-                .frame(width: 44)
-                .textFieldStyle(.roundedBorder)
-                .font(.caption.monospacedDigit())
-                .multilineTextAlignment(.center)
-                .onSubmit {
-                    // Clamp to valid range on submit
-                    value.wrappedValue = min(max(value.wrappedValue, range.lowerBound), range.upperBound)
-                }
-            if !suffix.isEmpty {
-                Text(suffix)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-    }
-
-    // MARK: - Footer
-
-    private var footerSection: some View {
-        HStack {
-            Button("Edit Config File") {
-                NSWorkspace.shared.open(
-                    FileManager.default.homeDirectoryForCurrentUser
-                        .appendingPathComponent(".config/pubbles/config.json")
-                )
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .font(.caption)
-
-            Spacer()
-
-            Button("Reset") {
-                configManager.resetStyleOverrides()
-            }
-            .buttonStyle(.plain)
-            .foregroundStyle(.secondary)
-            .font(.caption)
-        }
-    }
-
-    // MARK: - Bindings
-
-    private var bgColorBinding: Binding<Color> {
-        Binding(
-            get: { Color(hex: style.backgroundColor) ?? .blue },
-            set: { configManager.setColor($0.toHex()) }
-        )
-    }
-
-    private var textColorBinding: Binding<Color> {
-        Binding(
-            get: { Color(hex: style.textColor) ?? .white },
-            set: { configManager.setStyleValue("textColor", $0.toHex()) }
-        )
-    }
-
-    private var drawingColorBinding: Binding<Color> {
-        Binding(
-            get: { Color(hex: style.drawingLineColor) ?? .red },
-            set: { configManager.setStyleValue("drawingLineColor", $0.toHex()) }
-        )
-    }
-
-    private var drawingLineWidthBinding: Binding<Double> {
-        Binding(
-            get: { Double(style.drawingLineWidth) },
-            set: { configManager.setStyleValue("drawingLineWidth", $0) }
-        )
-    }
-
-    private var fontSizeBinding: Binding<Double> {
-        Binding(
-            get: { Double(style.fontSize) },
-            set: { configManager.setStyleValue("fontSize", $0) }
-        )
-    }
-
-    private var maxWidthBinding: Binding<Double> {
-        Binding(
-            get: { Double(style.maxWidth) },
-            set: { configManager.setStyleValue("maxWidth", $0) }
-        )
-    }
-
-    private var charLimitBinding: Binding<Double> {
-        Binding(
-            get: { Double(behavior.charLimit) },
-            set: { configManager.setBehaviorValue("charLimit", Int($0)) }
-        )
-    }
-
-    private var idleTimeoutBinding: Binding<Double> {
-        Binding(
-            get: { behavior.idleTimeout },
-            set: { configManager.setBehaviorValue("idleTimeout", $0) }
-        )
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .navigationTitle(title)
     }
 }
 
 // MARK: - Pill Preview
 
-private struct PillPreview: View {
+struct PillPreview: View {
     let style: StyleConfig
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .blue }
@@ -409,80 +148,9 @@ private struct PillPreview: View {
     }
 }
 
-// MARK: - Section Container
-
-private struct SectionBox<Content: View>: View {
-    let title: String
-    let content: Content
-
-    init(_ title: String, @ViewBuilder content: () -> Content) {
-        self.title = title
-        self.content = content()
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.headline)
-            content
-        }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
-}
-
-// MARK: - Flow Layout for theme chips
-
-private struct FlowLayout: Layout {
-    var spacing: CGFloat = 6
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var height: CGFloat = 0
-        for (i, row) in rows.enumerated() {
-            let rowHeight = row.map { subviews[$0].sizeThatFits(.unspecified).height }.max() ?? 0
-            height += rowHeight + (i > 0 ? spacing : 0)
-        }
-        return CGSize(width: proposal.width ?? 0, height: height)
-    }
-
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let rows = computeRows(proposal: proposal, subviews: subviews)
-        var y = bounds.minY
-        for row in rows {
-            let rowHeight = row.map { subviews[$0].sizeThatFits(.unspecified).height }.max() ?? 0
-            var x = bounds.minX
-            for index in row {
-                let size = subviews[index].sizeThatFits(.unspecified)
-                subviews[index].place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(size))
-                x += size.width + spacing
-            }
-            y += rowHeight + spacing
-        }
-    }
-
-    private func computeRows(proposal: ProposedViewSize, subviews: Subviews) -> [[Int]] {
-        let maxWidth = proposal.width ?? .infinity
-        var rows: [[Int]] = [[]]
-        var currentWidth: CGFloat = 0
-        for (index, subview) in subviews.enumerated() {
-            let size = subview.sizeThatFits(.unspecified)
-            if currentWidth + size.width > maxWidth && !rows[rows.count - 1].isEmpty {
-                rows.append([])
-                currentWidth = 0
-            }
-            rows[rows.count - 1].append(index)
-            currentWidth += size.width + spacing
-        }
-        return rows
-    }
-}
-
 // MARK: - Hotkey Recorder
 
-private struct HotkeyRecorder: View {
+struct HotkeyRecorder: View {
     let hotkey: String
     let onSave: (String) -> Void
 
@@ -633,7 +301,7 @@ private struct HotkeyRecorder: View {
 
 // MARK: - Gradient Picker
 
-private struct GradientPicker: NSViewRepresentable {
+struct GradientPicker: NSViewRepresentable {
     @Binding var colors: [String]
 
     func makeNSView(context: Context) -> GradientPickerView {
@@ -652,7 +320,7 @@ private struct GradientPicker: NSViewRepresentable {
 }
 
 @MainActor
-private class GradientPickerView: NSView {
+class GradientPickerView: NSView {
     var colors: [String] = []
     var onColorsChanged: (([String]) -> Void)?
     private var selectedIndex: Int?
@@ -836,7 +504,7 @@ private class GradientPickerView: NSView {
     }
 }
 
-private extension NSColor {
+extension NSColor {
     static func fromHex(_ hex: String) -> NSColor? {
         var h = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         if h.hasPrefix("#") { h.removeFirst() }

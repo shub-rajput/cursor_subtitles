@@ -5,12 +5,16 @@ import SwiftUI
 class SettingsWindowController: NSWindowController, NSWindowDelegate {
     convenience init() {
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 420, height: 600),
-            styleMask: [.titled, .closable, .miniaturizable],
+            contentRect: NSRect(x: 0, y: 0, width: 700, height: 550),
+            styleMask: [.titled, .closable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
         window.title = "Pubbles"
+        let toolbar = NSToolbar()
+        toolbar.showsBaselineSeparator = false
+        window.toolbar = toolbar
+        window.toolbarStyle = .unified
         window.center()
         window.contentView = NSHostingView(rootView: SettingsView())
         self.init(window: window)
