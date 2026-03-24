@@ -247,7 +247,6 @@ class ConfigManager: ObservableObject {
         } else {
             dict.removeValue(forKey: "theme")
         }
-        dict.removeValue(forKey: "colorPreset")
         writeConfigDict(dict)
     }
 
@@ -310,6 +309,17 @@ class ConfigManager: ObservableObject {
     func setColor(_ hex: String) {
         guard var dict = readConfigDict() else { return }
         dict["colorPreset"] = hex
+        // Clear manual backgroundColor so colorPreset takes effect
+        if var styleDict = dict["style"] as? [String: Any] {
+            styleDict.removeValue(forKey: "backgroundColor")
+            dict["style"] = styleDict
+        }
+        writeConfigDict(dict)
+    }
+
+    func setHotkey(_ hotkey: String) {
+        guard var dict = readConfigDict() else { return }
+        dict["hotkey"] = hotkey
         writeConfigDict(dict)
     }
 
@@ -327,5 +337,30 @@ class ConfigManager: ObservableObject {
         } catch {
             print("Failed to write config: \(error)")
         }
+    }
+
+    func removeStyleValue(_ key: String) {
+        guard var dict = readConfigDict() else { return }
+        if var styleDict = dict["style"] as? [String: Any] {
+            styleDict.removeValue(forKey: key)
+            dict["style"] = styleDict
+            writeConfigDict(dict)
+        }
+    }
+
+    func setStyleValue(_ key: String, _ value: Any) {
+        guard var dict = readConfigDict() else { return }
+        var styleDict = dict["style"] as? [String: Any] ?? [:]
+        styleDict[key] = value
+        dict["style"] = styleDict
+        writeConfigDict(dict)
+    }
+
+    func setBehaviorValue(_ key: String, _ value: Any) {
+        guard var dict = readConfigDict() else { return }
+        var behaviorDict = dict["behavior"] as? [String: Any] ?? [:]
+        behaviorDict[key] = value
+        dict["behavior"] = behaviorDict
+        writeConfigDict(dict)
     }
 }
