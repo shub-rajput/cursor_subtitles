@@ -6,6 +6,10 @@ struct StyleSettingsView: View {
 
     private var style: StyleConfig { configManager.config.style }
 
+    private var availableFontFamilies: [String] {
+        NSFontManager.shared.availableFontFamilies.sorted()
+    }
+
     var body: some View {
         VStack(spacing: 0) {
             previewArea
@@ -161,10 +165,9 @@ struct StyleSettingsView: View {
 
             Picker("Font Family", selection: fontFamilyBinding) {
                 Text("System").tag("system")
-                Text("SF Mono").tag("SF Mono")
-                Text("Menlo").tag("Menlo")
-                Text("Helvetica Neue").tag("Helvetica Neue")
-                Text("Avenir Next").tag("Avenir Next")
+                ForEach(availableFontFamilies, id: \.self) { family in
+                    Text(family).tag(family)
+                }
             }
 
             Picker("Scale", selection: scalePickerBinding) {
@@ -269,7 +272,7 @@ struct StyleSettingsView: View {
             }
 
             Picker("Line Width", selection: drawingLineWidthPickerBinding) {
-                ForEach([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], id: \.self) { w in
+                ForEach([1, 3, 5, 8, 10], id: \.self) { w in
                     Text("\(w)px").tag(CGFloat(w))
                 }
             }
