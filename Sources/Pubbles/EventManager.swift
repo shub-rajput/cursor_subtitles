@@ -92,12 +92,15 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
-        // Track Cmd key state for hold-to-draw
+        // Track modifier key state for hold-to-draw
         if type == .flagsChanged {
-            let cmdHeld = event.flags.contains(.maskCommand)
+            let (drawingMods, _) = MainActor.assumeIsolated {
+                Self.parseHotkey(ConfigManager.shared.config.drawingHotkey)
+            }
+            let modifierHeld = event.flags.contains(drawingMods.cgEventFlags)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    self.viewModel.drawingModeEnabled = cmdHeld && self.viewModel.drawingAllowed
+                    self.viewModel.drawingModeEnabled = modifierHeld && self.viewModel.drawingAllowed
                 }
             }
             return Unmanaged.passUnretained(event)
@@ -287,5 +290,16 @@ final class EventManager {
         if mods.isEmpty { mods = .command }
 
         return (mods, code)
+    }
+}
+
+extension NSEvent.ModifierFlags {
+    var cgEventFlags: CGEventFlags {
+        var flags: CGEventFlags = []
+        if contains(.command) { flags.insert(.maskCommand) }
+        if contains(.shift) { flags.insert(.maskShift) }
+        if contains(.option) { flags.insert(.maskAlternate) }
+        if contains(.control) { flags.insert(.maskControl) }
+        return flags
     }
 }
