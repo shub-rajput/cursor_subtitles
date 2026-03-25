@@ -8,7 +8,7 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
-            Section("Text") {
+            Section {
                 Picker("Max Width", selection: maxWidthPickerBinding) {
                     ForEach([150, 200, 250, 300, 400, 500, 600], id: \.self) { w in
                         Text("\(w)px").tag(CGFloat(w))
@@ -22,14 +22,15 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            Section("Behavior") {
+            Section {
                 HStack {
                     Text("Idle Timeout")
-                    Slider(value: idleTimeoutBinding, in: 1...30, step: 1)
+                        .frame(width: 72, alignment: .leading)
+                    Slider(value: idleTimeoutBinding, in: 1...30)
                     Text("\(Int(behavior.idleTimeout))s")
                         .font(.caption.monospacedDigit())
                         .foregroundStyle(.secondary)
-                        .frame(width: 28, alignment: .trailing)
+                        .frame(width: 36, alignment: .trailing)
                 }
             }
         }

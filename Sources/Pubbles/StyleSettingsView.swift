@@ -103,7 +103,7 @@ struct StyleSettingsView: View {
     }
 
     private var appearanceSection: some View {
-        Section("Appearance") {
+        Section {
             if !style.glassEffect {
                 HStack {
                     Text("Bubble Background")
@@ -180,7 +180,7 @@ struct StyleSettingsView: View {
     // MARK: - Border
 
     private var borderSection: some View {
-        Section("Border") {
+        Section {
             HStack {
                 Text("Border Color")
                 Spacer()
@@ -207,7 +207,7 @@ struct StyleSettingsView: View {
     // MARK: - Shadow
 
     private var shadowSection: some View {
-        Section("Shadow") {
+        Section {
             HStack {
                 Text("Shadow Color")
                 Spacer()
@@ -217,7 +217,8 @@ struct StyleSettingsView: View {
 
             HStack {
                 Text("Opacity")
-                Slider(value: shadowOpacityBinding, in: 0...1, step: 0.05)
+                    .frame(width: 72, alignment: .leading)
+                Slider(value: shadowOpacityBinding, in: 0...1)
                 Text("\(Int(style.shadowOpacity * 100))%")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
@@ -226,29 +227,32 @@ struct StyleSettingsView: View {
 
             HStack {
                 Text("X Offset")
-                Slider(value: shadowXBinding, in: -10...10, step: 1)
+                    .frame(width: 72, alignment: .leading)
+                Slider(value: shadowXBinding, in: -10...10)
                 Text("\(Int(style.shadowX))")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .frame(width: 24, alignment: .trailing)
+                    .frame(width: 36, alignment: .trailing)
             }
 
             HStack {
                 Text("Y Offset")
-                Slider(value: shadowYBinding, in: -10...10, step: 1)
+                    .frame(width: 72, alignment: .leading)
+                Slider(value: shadowYBinding, in: -10...10)
                 Text("\(Int(style.shadowY))")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .frame(width: 24, alignment: .trailing)
+                    .frame(width: 36, alignment: .trailing)
             }
 
             HStack {
                 Text("Blur Radius")
-                Slider(value: shadowRadiusBinding, in: 0...20, step: 1)
+                    .frame(width: 72, alignment: .leading)
+                Slider(value: shadowRadiusBinding, in: 0...20)
                 Text("\(Int(style.shadowRadius))")
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
-                    .frame(width: 24, alignment: .trailing)
+                    .frame(width: 36, alignment: .trailing)
             }
         }
     }
@@ -256,7 +260,7 @@ struct StyleSettingsView: View {
     // MARK: - Drawing
 
     private var drawingSection: some View {
-        Section("Drawing") {
+        Section {
             HStack {
                 Text("Line Color")
                 Spacer()
@@ -265,7 +269,7 @@ struct StyleSettingsView: View {
             }
 
             Picker("Line Width", selection: drawingLineWidthPickerBinding) {
-                ForEach([1, 2, 3, 4, 5], id: \.self) { w in
+                ForEach([1, 2, 3, 4, 5, 6, 7, 8, 9, 10], id: \.self) { w in
                     Text("\(w)px").tag(CGFloat(w))
                 }
             }
