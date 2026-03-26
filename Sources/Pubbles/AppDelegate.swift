@@ -65,7 +65,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         toggleItem.state = isEnabled ? .on : .off
         menu.addItem(toggleItem)
 
-        let drawingItem = NSMenuItem(title: "Drawing", action: #selector(toggleDrawingAllowed), keyEquivalent: "")
+        let drawingItem = NSMenuItem(title: "Doodle", action: #selector(toggleDrawingAllowed), keyEquivalent: "")
         drawingItem.state = viewModel.drawingAllowed ? .on : .off
         menu.addItem(drawingItem)
         menu.addItem(NSMenuItem.separator())
@@ -144,7 +144,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let hotkey = ConfigManager.shared.config.hotkey
         menu.items.first(where: { $0.title.hasSuffix("to start typing") })?.title = "\(hotkey) to start typing"
         menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
-        menu.items.first(where: { $0.title == "Drawing" })?.state = viewModel.drawingAllowed ? .on : .off
+        menu.items.first(where: { $0.title == "Doodle" })?.state = viewModel.drawingAllowed ? .on : .off
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
@@ -173,63 +173,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         }
     }
 
-    @objc private func resetConfig() {
-        ConfigManager.shared.resetStyleOverrides()
-        statusItem.menu = buildMenu()
-    }
-
-    @objc private func openConfig() {
-        NSWorkspace.shared.open(
-            FileManager.default.homeDirectoryForCurrentUser
-                .appendingPathComponent(".config/pubbles/config.json")
-        )
-    }
-
-    @objc private func showAbout() {
-        let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "unknown"
-        let alert = NSAlert()
-        alert.messageText = "Pubbles"
-        alert.informativeText = "Version \(version)\n\nSubtitles for your pointer.\n\nCopyright © 2026 Shubhang Haresh Rajput"
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        alert.addButton(withTitle: "Support Pubbles ♥")
-        alert.addButton(withTitle: "GitHub")
-        NSApp.activate(ignoringOtherApps: true)
-        let response = alert.runModal()
-        if response == .alertSecondButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://ko-fi.com/shubhangrajput")!)
-        } else if response == .alertThirdButtonReturn {
-            NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles")!)
-        }
-    }
-
     @objc private func openThemesFolder() {
         let themesURL = FileManager.default.homeDirectoryForCurrentUser
             .appendingPathComponent(".config/pubbles/themes")
         NSWorkspace.shared.open(themesURL)
-    }
-
-    @objc private func showKeyboardShortcuts() {
-        let hotkey = ConfigManager.shared.config.hotkey
-        let alert = NSAlert()
-        alert.messageText = "Hotkeys"
-        alert.informativeText = """
-            \(hotkey) — Toggle Pubble pill
-            Esc — Dismiss pill
-            Enter — New line
-            Backspace — Delete character
-
-            While pill is active:
-            Hold ⌘ + click+drag — Draw on screen
-            ⌘↑ / ⌘↓ — Cycle themes
-            ⌘→ / ⌘← — Scale pill up / down
-
-            Click anywhere — Dismiss pill
-            """
-        alert.alertStyle = .informational
-        alert.addButton(withTitle: "OK")
-        NSApp.activate(ignoringOtherApps: true)
-        alert.runModal()
     }
 
     @objc private func checkForUpdates() {
