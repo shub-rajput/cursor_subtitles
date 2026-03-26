@@ -9,15 +9,19 @@ struct GeneralSettingsView: View {
     var body: some View {
         Form {
             Section {
-                Picker("Max Width", selection: maxWidthPickerBinding) {
-                    ForEach([150, 200, 250, 300, 400, 500, 600], id: \.self) { w in
-                        Text("\(w)px").tag(CGFloat(w))
+                Toggle("Multi-line Pubble", isOn: multiLineBinding)
+
+                if !behavior.multiLine {
+                    Picker("Per Line Character Limit", selection: charLimitPickerBinding) {
+                        ForEach([15, 20, 25, 30, 40, 50], id: \.self) { c in
+                            Text("\(c)").tag(c)
+                        }
                     }
                 }
 
-                Picker("Char Limit", selection: charLimitPickerBinding) {
-                    ForEach([15, 20, 25, 30, 40, 50], id: \.self) { c in
-                        Text("\(c)").tag(c)
+                Picker("Max Width", selection: maxWidthPickerBinding) {
+                    ForEach([150, 200, 250, 300, 400, 500, 600], id: \.self) { w in
+                        Text("\(w)px").tag(CGFloat(w))
                     }
                 }
             }
@@ -58,6 +62,13 @@ struct GeneralSettingsView: View {
         Binding(
             get: { behavior.idleTimeout },
             set: { configManager.setBehaviorValue("idleTimeout", $0) }
+        )
+    }
+
+    private var multiLineBinding: Binding<Bool> {
+        Binding(
+            get: { behavior.multiLine },
+            set: { configManager.setBehaviorValue("multiLine", $0) }
         )
     }
 }

@@ -2,7 +2,7 @@
 *.app
 .DS_Store
 .swiftpm/
-docs/plans/
+docs/
 .agents
 *.zip
 *.dmg
