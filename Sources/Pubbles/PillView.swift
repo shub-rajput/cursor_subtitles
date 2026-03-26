@@ -111,12 +111,15 @@ struct PillView: View {
                         .anchorPreference(key: EditCursorAnchorKey.self, value: .leading) {
                             ac.id == editID ? $0 : nil
                         }
+                        .layoutValue(key: IsWhitespaceKey.self, value: ac.character == " ")
                 }
             }
             // End-of-line cursor: visible only when cursor is at end
-            Text(cursorVisible && viewModel.isActive && editID == nil ? "|" : " ")
+            let isCursorChar = cursorVisible && viewModel.isActive && editID == nil
+            Text(isCursorChar ? "|" : " ")
                 .font(cursorFont)
                 .foregroundStyle(txtColor)
+                .layoutValue(key: IsWhitespaceKey.self, value: !isCursorChar)
         } else {
             // Fallback for non-animated text (hints, etc.)
             Text(viewModel.text).font(textFont).foregroundStyle(txtColor) + Text(cursorVisible && viewModel.isActive ? "|" : " ").font(cursorFont).foregroundStyle(txtColor)
@@ -211,6 +214,10 @@ private struct LineBreakKey: LayoutValueKey {
     static let defaultValue: Bool = false
 }
 
+private struct IsWhitespaceKey: LayoutValueKey {
+    static let defaultValue: Bool = false
+}
+
 private struct CharFlowLayout: Layout {
     var contentMaxWidth: CGFloat
 
@@ -241,14 +248,16 @@ private struct CharFlowLayout: Layout {
         var y: CGFloat = 0
         var lineHeight: CGFloat = 0
         var totalWidth: CGFloat = 0
+        var atLineStart = true
 
         for subview in subviews {
             if subview[LineBreakKey.self] {
                 // Force line break — place at zero size (every subview must be placed)
                 frames.append(CGRect(x: x, y: y, width: 0, height: 0))
                 x = 0
-                y += lineHeight
+                y += lineHeight + 4
                 lineHeight = 0
+                atLineStart = true
                 continue
             }
 
@@ -256,13 +265,22 @@ private struct CharFlowLayout: Layout {
             if x + size.width > availableWidth && x > 0 {
                 // Auto-wrap: start a new line
                 x = 0
-                y += lineHeight
+                y += lineHeight + 4
                 lineHeight = 0
+                atLineStart = true
             }
+
+            // Skip leading whitespace at the start of any line (prevents indent after wrap)
+            if atLineStart && subview[IsWhitespaceKey.self] {
+                frames.append(CGRect(x: 0, y: y, width: 0, height: 0))
+                continue
+            }
+
             frames.append(CGRect(x: x, y: y, width: size.width, height: size.height))
             x += size.width
             lineHeight = max(lineHeight, size.height)
             totalWidth = max(totalWidth, x)
+            atLineStart = false
         }
 
         return (CGSize(width: totalWidth, height: y + lineHeight), frames)
