@@ -38,9 +38,16 @@ struct SettingsView: View {
         }
         .listStyle(.sidebar)
         .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 6) {
-                Text("Pubbles")
-                    .font(.headline)
+            VStack(spacing: 0) {
+                if let nsImage = NSImage(named: "pubbles-title") ?? Bundle.main.image(forResource: "pubbles-title") {
+                    Image(nsImage: nsImage)
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 85)
+                        .padding(.bottom, -16)
+                } else {
+                    Text("Pubbles").font(.headline)
+                }
                 Text(Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")
                     .font(.caption2)
                     .padding(.horizontal, 8)
@@ -49,7 +56,7 @@ struct SettingsView: View {
                     .clipShape(Capsule())
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 24)
         }
     }
 
