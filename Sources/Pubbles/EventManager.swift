@@ -100,7 +100,10 @@ final class EventManager {
             let modifierHeld = event.flags.contains(drawingMods.cgEventFlags)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    self.viewModel.drawingModeEnabled = modifierHeld && self.viewModel.drawingAllowed
+                    let newValue = modifierHeld && self.viewModel.drawingAllowed
+                    if self.viewModel.drawingModeEnabled != newValue {
+                        self.viewModel.drawingModeEnabled = newValue
+                    }
                 }
             }
             return Unmanaged.passUnretained(event)
