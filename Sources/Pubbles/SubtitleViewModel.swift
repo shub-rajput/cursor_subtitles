@@ -134,7 +134,7 @@ class SubtitleViewModel: ObservableObject {
         }
         onNewLine = false
 
-        if text.count < config.config.behavior.charLimit {
+        if config.config.behavior.multiLine || text.count < config.config.behavior.charLimit {
             let atEnd = textCursorIndex >= text.count
             let insertIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
             text.insert(contentsOf: char, at: insertIdx)
@@ -160,18 +160,26 @@ class SubtitleViewModel: ObservableObject {
         guard isActive else { return }
         if !isVisible { isVisible = true }
 
-        // Move current text to previous line, show it above
-        if !text.isEmpty {
-            withAnimation(.snappy(duration: 0.2)) {
-                previousLine = text
-                previousLineChars = animatedChars
-                showPreviousLine = true
-                onNewLine = true
+        if config.config.behavior.multiLine {
+            // Insert "\n" at cursor position (same pattern as mid-text char insert)
+            let insertIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
+            text.insert("\n", at: insertIdx)
+            textCursorIndex += 1
+            rebuildAnimatedChars()
+        } else {
+            // Move current text to previous line, show it above
+            if !text.isEmpty {
+                withAnimation(.snappy(duration: 0.2)) {
+                    previousLine = text
+                    previousLineChars = animatedChars
+                    showPreviousLine = true
+                    onNewLine = true
+                }
+                // Outside withAnimation so chars vanish instantly (no exit transition)
+                text = ""
+                animatedChars = []
+                textCursorIndex = 0
             }
-            // Outside withAnimation so chars vanish instantly (no exit transition)
-            text = ""
-            animatedChars = []
-            textCursorIndex = 0
         }
         resetIdleTimer()
     }
