@@ -69,7 +69,7 @@ struct PillContainerView: View {
                     .allowsHitTesting(false)
             }
 
-            if viewModel.isVisible && isActiveScreen {
+            if viewModel.isVisible && isActiveScreen && !viewModel.pillHiddenForDrawing {
                 PillView(viewModel: viewModel)
                     .scaleEffect(springScale, anchor: .topLeading)
                     .onChange(of: configManager.config.style.pillScale) { oldVal, newVal in
@@ -93,6 +93,11 @@ struct PillContainerView: View {
             ? .smooth(duration: fadeIn)
             : .easeOut(duration: fadeOut),
             value: viewModel.isVisible && isActiveScreen
+        )
+        .animation(viewModel.pillHiddenForDrawing
+            ? .easeOut(duration: fadeOut)
+            : .smooth(duration: fadeIn),
+            value: viewModel.pillHiddenForDrawing
         )
     }
 
