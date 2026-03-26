@@ -23,16 +23,10 @@ class SubtitleViewModel: ObservableObject {
     @Published var onNewLine: Bool = false
 
     @Published var drawingAllowed: Bool = true
-    @Published var drawingModeEnabled: Bool = false {
-        didSet {
-            guard config.config.behavior.hidePillWhileDrawing, isActive else {
-                if pillHiddenForDrawing { pillHiddenForDrawing = false }
-                return
-            }
-            pillHiddenForDrawing = drawingModeEnabled
-        }
-    }
+    @Published var drawingModeEnabled: Bool = false
     @Published var pillHiddenForDrawing: Bool = false
+    var drawingToggleActive: Bool = false
+    private var activatedFromDrawingToggle: Bool = false
     @Published var strokes: [[NSPoint]] = []
     /// Not @Published — updated at ~60Hz during drag; Canvas reads it via TimelineView to avoid PillView redraws
     var currentStroke: [NSPoint] = []
@@ -85,8 +79,75 @@ class SubtitleViewModel: ObservableObject {
         resetIdleTimer()
     }
 
+    func showPubbleForDrawing() {
+        guard drawingToggleActive else { return }
+        text = ""
+        animatedChars = []
+        nextCharID = 0
+        textCursorIndex = 0
+        previousLine = ""
+        previousLineChars = []
+        showPreviousLine = false
+        onNewLine = false
+        pillHiddenForDrawing = false
+        resetIdleTimer()
+    }
+
+    func returnToDrawingMode() {
+        guard drawingToggleActive else { return }
+        pillHiddenForDrawing = true
+        let fadeOut = config.config.behavior.fadeOutDuration
+        DispatchQueue.main.asyncAfter(deadline: .now() + fadeOut) { [weak self] in
+            guard let self, self.drawingToggleActive else { return }
+            self.text = ""
+            self.animatedChars = []
+            self.nextCharID = 0
+            self.textCursorIndex = 0
+            self.previousLine = ""
+            self.previousLineChars = []
+            self.showPreviousLine = false
+            self.onNewLine = false
+        }
+        resetIdleTimer()
+    }
+
+    func toggleDrawing() {
+        guard drawingAllowed else { return }
+        drawingToggleActive.toggle()
+        if drawingToggleActive {
+            if !isActive {
+                // Activate the overlay infrastructure without showing the pill
+                text = ""
+                animatedChars = []
+                nextCharID = 0
+                textCursorIndex = 0
+                previousLine = ""
+                previousLineChars = []
+                showPreviousLine = false
+                onNewLine = false
+                isActive = true
+                isVisible = true
+                activatedFromDrawingToggle = true
+            }
+            drawingModeEnabled = true
+            pillHiddenForDrawing = true
+            resetIdleTimer()
+        } else {
+            let shouldDismiss = activatedFromDrawingToggle
+            activatedFromDrawingToggle = false
+            drawingModeEnabled = false
+            if shouldDismiss {
+                dismiss()
+            } else {
+                pillHiddenForDrawing = false
+            }
+        }
+    }
+
     func dismiss() {
         idleTimer?.invalidate()
+        drawingToggleActive = false
+        activatedFromDrawingToggle = false
         if pillHiddenForDrawing { pillHiddenForDrawing = false }
         isActive = false
         isVisible = false

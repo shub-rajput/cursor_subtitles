@@ -105,6 +105,8 @@ final class EventManager {
             let modifierHeld = event.flags.contains(drawingMods.cgEventFlags)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
+                    // Don't override drawing mode while toggle is active
+                    guard !self.viewModel.drawingToggleActive else { return }
                     let newValue = modifierHeld && self.viewModel.drawingAllowed
                     if self.viewModel.drawingModeEnabled != newValue {
                         self.viewModel.drawingModeEnabled = newValue
@@ -150,11 +152,35 @@ final class EventManager {
         if keyCode == hotkeyCode && mods == hotkeyMods {
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
-                    if self.viewModel.isActive { self.viewModel.dismiss() }
-                    else { self.viewModel.activate() }
+                    if self.viewModel.drawingToggleActive {
+                        if self.viewModel.pillHiddenForDrawing {
+                            self.viewModel.showPubbleForDrawing()
+                        } else {
+                            self.viewModel.returnToDrawingMode()
+                        }
+                    } else if self.viewModel.isActive {
+                        self.viewModel.dismiss()
+                    } else {
+                        self.viewModel.activate()
+                    }
                 }
             }
             return nil
+        }
+
+        // Drawing toggle hotkey
+        let (drawToggleMods, drawToggleCode) = MainActor.assumeIsolated {
+            Self.parseHotkey(ConfigManager.shared.config.drawingToggleHotkey)
+        }
+        if keyCode == drawToggleCode && mods == drawToggleMods {
+            let drawingAllowed = MainActor.assumeIsolated { self.viewModel.drawingAllowed }
+            if drawingAllowed {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { self.viewModel.toggleDrawing() }
+                }
+                return nil
+            }
+            return Unmanaged.passUnretained(event)
         }
 
         // Cmd+arrow shortcuts (only when pill is active)

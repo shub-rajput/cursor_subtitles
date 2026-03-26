@@ -41,12 +41,12 @@ struct BehaviorConfig: Codable, Sendable {
     var fadeInDuration: Double = 0.2
     var charLimit: Int = 30
     var multiLine: Bool = false
-    var hidePillWhileDrawing: Bool = false
 }
 
 struct AppConfig: Codable, Sendable {
     var hotkey: String = "cmd+/"
     var drawingHotkey: String = "cmd"
+    var drawingToggleHotkey: String = "cmd+d"
     var theme: String? = nil
     var style: StyleConfig = StyleConfig()
     var behavior: BehaviorConfig = BehaviorConfig()
@@ -329,6 +329,12 @@ class ConfigManager: ObservableObject {
     func setDrawingHotkey(_ hotkey: String) {
         guard var dict = readConfigDict() else { return }
         dict["drawingHotkey"] = hotkey
+        writeConfigDict(dict)
+    }
+
+    func setDrawingToggleHotkey(_ hotkey: String) {
+        guard var dict = readConfigDict() else { return }
+        dict["drawingToggleHotkey"] = hotkey
         writeConfigDict(dict)
     }
 

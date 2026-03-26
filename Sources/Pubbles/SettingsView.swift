@@ -63,20 +63,104 @@ struct SettingsView: View {
         case .settings:
             GeneralSettingsView()
         case .about:
-            placeholderView("About")
+            AboutSettingsView()
         }
     }
 
-    private func placeholderView(_ title: String) -> some View {
-        VStack {
+}
+
+// MARK: - About
+
+@MainActor
+struct AboutSettingsView: View {
+    @State private var updateStatus: String? = nil
+    @State private var isChecking = false
+
+    private var version: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?"
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
             Spacer()
-            Text("\(title) — Coming Soon")
-                .font(.title3)
-                .foregroundStyle(.secondary)
+
+            VStack(spacing: 16) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable()
+                    .frame(width: 80, height: 80)
+
+                VStack(spacing: 4) {
+                    Text("Pubbles")
+                        .font(.title2.bold())
+                    Text("Version \(version)")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+
+                Text("Subtitles for your pointer.")
+                    .font(.body)
+                    .foregroundStyle(.secondary)
+
+                HStack(spacing: 12) {
+                    Button("Support Pubbles ♥") {
+                        NSWorkspace.shared.open(URL(string: "https://ko-fi.com/shubhangrajput")!)
+                    }
+                    Button("GitHub") {
+                        NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles")!)
+                    }
+                }
+
+                Divider()
+                    .frame(maxWidth: 260)
+
+                VStack(spacing: 8) {
+                    Button(action: checkForUpdates) {
+                        if isChecking {
+                            HStack(spacing: 6) {
+                                ProgressView().controlSize(.small)
+                                Text("Checking...")
+                            }
+                        } else if UpdateChecker.shared.updateAvailable, let latest = UpdateChecker.shared.latestVersion {
+                            Text("Update Available (\(latest))")
+                        } else {
+                            Text("Check for Updates")
+                        }
+                    }
+                    .disabled(isChecking)
+
+                    if let status = updateStatus {
+                        Text(status)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+
             Spacer()
+
+            Text("Copyright © 2026 Shubhang Haresh Rajput")
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .padding(.bottom, 20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .navigationTitle(title)
+        .navigationTitle("About")
+    }
+
+    private func checkForUpdates() {
+        if UpdateChecker.shared.updateAvailable {
+            UpdateChecker.shared.promptAndUpdate()
+        } else {
+            isChecking = true
+            updateStatus = nil
+            UpdateChecker.shared.checkForUpdates(silent: false)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                isChecking = false
+                if !UpdateChecker.shared.updateAvailable {
+                    updateStatus = "Pubbles is up to date."
+                }
+            }
+        }
     }
 }
 

@@ -76,20 +76,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
 
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Edit Config...", action: #selector(openConfig), keyEquivalent: ","))
-        menu.addItem(NSMenuItem(title: "Reset Config", action: #selector(resetConfig), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "About", action: #selector(showAbout), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "Hotkeys", action: #selector(showKeyboardShortcuts), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-
-        if UpdateChecker.shared.updateAvailable, let latest = UpdateChecker.shared.latestVersion {
-            let updateItem = NSMenuItem(title: "Update Available (\(latest))", action: #selector(checkForUpdates), keyEquivalent: "")
-            menu.addItem(updateItem)
-        } else {
-            menu.addItem(NSMenuItem(title: "Check for Updates...", action: #selector(checkForUpdates), keyEquivalent: ""))
-        }
-
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         return menu
     }
@@ -168,6 +155,7 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         viewModel.drawingAllowed.toggle()
         if !viewModel.drawingAllowed {
             viewModel.drawingModeEnabled = false
+            viewModel.drawingToggleActive = false
         }
     }
 

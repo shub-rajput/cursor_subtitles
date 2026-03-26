@@ -27,10 +27,6 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                Toggle("Hide Pubble while drawing", isOn: hidePillWhileDrawingBinding)
-            }
-
-            Section {
                 Picker("Idle Timeout", selection: idleTimeoutBinding) {
                     ForEach([3.0, 5.0, 10.0, 20.0], id: \.self) { s in
                         Text("\(Int(s))s").tag(s)
@@ -72,10 +68,4 @@ struct GeneralSettingsView: View {
         )
     }
 
-    private var hidePillWhileDrawingBinding: Binding<Bool> {
-        Binding(
-            get: { behavior.hidePillWhileDrawing },
-            set: { configManager.setBehaviorValue("hidePillWhileDrawing", $0) }
-        )
-    }
 }

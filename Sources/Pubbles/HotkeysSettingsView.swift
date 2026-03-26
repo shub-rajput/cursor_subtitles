@@ -7,6 +7,7 @@ struct HotkeysSettingsView: View {
     private enum RecordingTarget {
         case enablePubble
         case drawingMode
+        case drawingToggle
     }
 
     var body: some View {
@@ -31,9 +32,28 @@ struct HotkeysSettingsView: View {
                     }
                 }
 
-                // Toggle Drawing Mode
+                // Drawing Toggle Hotkey
                 HStack {
-                    Text("Toggle Drawing Mode")
+                    Text("Toggle Drawing")
+                    Spacer()
+
+                    if recordingRow == .drawingToggle {
+                        HotkeyRecorderInline(
+                            onRecord: { newHotkey in
+                                configManager.setDrawingToggleHotkey(newHotkey)
+                                recordingRow = nil
+                            },
+                            onCancel: { recordingRow = nil }
+                        )
+                    } else {
+                        hotkeyKeyCaps(configManager.config.drawingToggleHotkey)
+                        recordButton { recordingRow = .drawingToggle }
+                    }
+                }
+
+                // Hold to Draw
+                HStack {
+                    Text("Hold to Draw")
                     Spacer()
 
                     if recordingRow == .drawingMode {
@@ -47,14 +67,8 @@ struct HotkeysSettingsView: View {
                         )
                     } else {
                         HStack(spacing: 6) {
-                            Text("Hold")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
                             hotkeyKeyCaps(configManager.config.drawingHotkey)
-                            Text("+")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("Click/Drag")
+                            Text("+ Click/Drag")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
