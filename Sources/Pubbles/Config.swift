@@ -41,6 +41,7 @@ struct BehaviorConfig: Codable, Sendable {
     var fadeInDuration: Double = 0.2
     var charLimit: Int = 30
     var multiLine: Bool = false
+    var hidePillWhileDrawing: Bool = false
 }
 
 struct AppConfig: Codable, Sendable {
