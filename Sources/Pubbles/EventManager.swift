@@ -75,16 +75,21 @@ final class EventManager {
     // We only read viewModel.isActive (which is safe enough for a quick check)
     // and dispatch all mutations to the main actor.
     nonisolated private func handleEvent(type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
-        // Re-enable tap if it gets disabled by the system, but only if we still have permission
+        // Re-enable tap if it gets disabled by the system, but only if we still have permission.
+        // Always dispatch to main to avoid a tight re-enable loop: AXIsProcessTrusted() can
+        // lag a few seconds after permission is revoked, so checking it synchronously here
+        // may return true and immediately re-enable a tap the system just disabled, which
+        // causes macOS to fire tapDisabledByTimeout again — a busy loop that lags the system.
         if type == .tapDisabledByTimeout || type == .tapDisabledByUserInput {
-            if AXIsProcessTrusted() {
-                if let tap = MainActor.assumeIsolated({ self.eventTap }) {
-                    CGEvent.tapEnable(tap: tap, enable: true)
-                }
-            } else {
-                // Permission was revoked — tear down and wait for re-grant
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated {
+                    // Guard: if tearDownEventTap() already ran, do nothing.
+                    guard self.eventTap != nil else { return }
+                    if AXIsProcessTrusted() {
+                        if let tap = self.eventTap {
+                            CGEvent.tapEnable(tap: tap, enable: true)
+                        }
+                    } else {
                         self.handlePermissionLost()
                     }
                 }
