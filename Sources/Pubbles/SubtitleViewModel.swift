@@ -23,7 +23,16 @@ class SubtitleViewModel: ObservableObject {
     @Published var onNewLine: Bool = false
 
     @Published var drawingAllowed: Bool = true
-    @Published var drawingModeEnabled: Bool = false
+    @Published var drawingModeEnabled: Bool = false {
+        didSet {
+            guard config.config.behavior.hidePillWhileDrawing, isActive else {
+                if pillHiddenForDrawing { pillHiddenForDrawing = false }
+                return
+            }
+            pillHiddenForDrawing = drawingModeEnabled
+        }
+    }
+    @Published var pillHiddenForDrawing: Bool = false
     @Published var strokes: [[NSPoint]] = []
     /// Not @Published — updated at ~60Hz during drag; Canvas reads it via TimelineView to avoid PillView redraws
     var currentStroke: [NSPoint] = []
@@ -78,6 +87,7 @@ class SubtitleViewModel: ObservableObject {
 
     func dismiss() {
         idleTimer?.invalidate()
+        if pillHiddenForDrawing { pillHiddenForDrawing = false }
         isActive = false
         isVisible = false
         // Delay content clearing so the fade animation renders with current appearance intact
