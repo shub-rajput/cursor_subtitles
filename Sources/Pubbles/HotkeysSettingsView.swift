@@ -13,9 +13,9 @@ struct HotkeysSettingsView: View {
     var body: some View {
         Form {
             Section {
-                // Enable Pubble
+                // Toggle Pubble mode
                 HStack {
-                    Text("Enable Pubble")
+                    Text("Toggle Pubble mode")
                     Spacer()
 
                     if recordingRow == .enablePubble {
@@ -32,28 +32,9 @@ struct HotkeysSettingsView: View {
                     }
                 }
 
-                // Drawing Toggle Hotkey
+                // Hold to doodle
                 HStack {
-                    Text("Toggle Drawing")
-                    Spacer()
-
-                    if recordingRow == .drawingToggle {
-                        HotkeyRecorderInline(
-                            onRecord: { newHotkey in
-                                configManager.setDrawingToggleHotkey(newHotkey)
-                                recordingRow = nil
-                            },
-                            onCancel: { recordingRow = nil }
-                        )
-                    } else {
-                        hotkeyKeyCaps(configManager.config.drawingToggleHotkey)
-                        recordButton { recordingRow = .drawingToggle }
-                    }
-                }
-
-                // Hold to Draw
-                HStack {
-                    Text("Hold to Draw")
+                    Text("Hold to doodle")
                     Spacer()
 
                     if recordingRow == .drawingMode {
@@ -75,9 +56,7 @@ struct HotkeysSettingsView: View {
                         recordButton { recordingRow = .drawingMode }
                     }
                 }
-            }
 
-            Section {
                 hotkeyRow("Change Pubble Scale") {
                     HStack(spacing: 4) {
                         KeyCap("cmd")
@@ -104,6 +83,35 @@ struct HotkeysSettingsView: View {
 
                 hotkeyRow("New Line") {
                     KeyCap("Enter")
+                }
+            }
+
+            Section {
+                // Toggle Doodle mode
+                HStack {
+                    Text("Toggle Doodle mode")
+                    Spacer()
+
+                    if recordingRow == .drawingToggle {
+                        HotkeyRecorderInline(
+                            onRecord: { newHotkey in
+                                configManager.setDrawingToggleHotkey(newHotkey)
+                                recordingRow = nil
+                            },
+                            onCancel: { recordingRow = nil }
+                        )
+                    } else {
+                        hotkeyKeyCaps(configManager.config.drawingToggleHotkey)
+                        recordButton { recordingRow = .drawingToggle }
+                    }
+                }
+
+                hotkeyRow("Show/Hide Pubble while doodling") {
+                    hotkeyKeyCaps(configManager.config.hotkey)
+                }
+
+                hotkeyRow("Exit Doodle mode") {
+                    KeyCap("Esc")
                 }
             }
         }
