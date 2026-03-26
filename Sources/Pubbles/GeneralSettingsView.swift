@@ -27,14 +27,14 @@ struct GeneralSettingsView: View {
             }
 
             Section {
-                HStack {
-                    Text("Idle Timeout")
-                        .frame(width: 72, alignment: .leading)
-                    Slider(value: idleTimeoutBinding, in: 1...30)
-                    Text("\(Int(behavior.idleTimeout))s")
-                        .font(.caption.monospacedDigit())
-                        .foregroundStyle(.secondary)
-                        .frame(width: 36, alignment: .trailing)
+                Toggle("Hide Pubble while drawing", isOn: hidePillWhileDrawingBinding)
+            }
+
+            Section {
+                Picker("Idle Timeout", selection: idleTimeoutBinding) {
+                    ForEach([3.0, 5.0, 10.0, 20.0], id: \.self) { s in
+                        Text("\(Int(s))s").tag(s)
+                    }
                 }
             }
         }
@@ -69,6 +69,13 @@ struct GeneralSettingsView: View {
         Binding(
             get: { behavior.multiLine },
             set: { configManager.setBehaviorValue("multiLine", $0) }
+        )
+    }
+
+    private var hidePillWhileDrawingBinding: Binding<Bool> {
+        Binding(
+            get: { behavior.hidePillWhileDrawing },
+            set: { configManager.setBehaviorValue("hidePillWhileDrawing", $0) }
         )
     }
 }
