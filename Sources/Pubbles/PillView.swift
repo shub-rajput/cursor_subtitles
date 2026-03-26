@@ -87,6 +87,42 @@ struct PillView: View {
         )
     }
 
+    @ViewBuilder
+    private var currentLineContent: some View {
+        if viewModel.isPlaceholder {
+            Text(viewModel.displayText)
+                .font(textFont)
+                .foregroundStyle(txtColor.opacity(0.7))
+        } else if viewModel.animatedChars.isEmpty && viewModel.text.isEmpty {
+            Text(cursorVisible ? "|" : " ")
+                .font(cursorFont)
+                .foregroundStyle(txtColor)
+        } else if !viewModel.animatedChars.isEmpty {
+            let editID = viewModel.editingCharID
+            ForEach(viewModel.animatedChars) { ac in
+                if ac.character == "\n" {
+                    Color.clear.frame(width: 0, height: 0)
+                        .layoutValue(key: LineBreakKey.self, value: true)
+                } else {
+                    Text(ac.character)
+                        .font(textFont)
+                        .foregroundStyle(txtColor)
+                        .transition(CharTransition())
+                        .anchorPreference(key: EditCursorAnchorKey.self, value: .leading) {
+                            ac.id == editID ? $0 : nil
+                        }
+                }
+            }
+            // End-of-line cursor: visible only when cursor is at end
+            Text(cursorVisible && viewModel.isActive && editID == nil ? "|" : " ")
+                .font(cursorFont)
+                .foregroundStyle(txtColor)
+        } else {
+            // Fallback for non-animated text (hints, etc.)
+            Text(viewModel.text).font(textFont).foregroundStyle(txtColor) + Text(cursorVisible && viewModel.isActive ? "|" : " ").font(cursorFont).foregroundStyle(txtColor)
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Previous line
@@ -111,38 +147,15 @@ struct PillView: View {
             }
 
             // Current line (or placeholder)
-            HStack(spacing: 0) {
-                if viewModel.isPlaceholder {
-                    Text(viewModel.displayText)
-                        .font(textFont)
-                        .foregroundStyle(txtColor.opacity(0.7))
-                } else if viewModel.animatedChars.isEmpty && viewModel.text.isEmpty {
-                    Text(cursorVisible ? "|" : " ")
-                        .font(cursorFont)
-                        .foregroundStyle(txtColor)
-                } else if !viewModel.animatedChars.isEmpty {
-                    let editID = viewModel.editingCharID
-                    ForEach(viewModel.animatedChars) { ac in
-                        Text(ac.character)
-                            .font(textFont)
-                            .foregroundStyle(txtColor)
-                            .transition(CharTransition())
-                            .anchorPreference(key: EditCursorAnchorKey.self, value: .leading) {
-                                ac.id == editID ? $0 : nil
-                            }
+            Group {
+                if configManager.config.behavior.multiLine {
+                    CharFlowLayout(contentMaxWidth: (style.maxWidth - 2 * style.paddingH) * scale) {
+                        currentLineContent
                     }
-                    // End-of-line cursor: visible only when cursor is at end
-                    Text(cursorVisible && viewModel.isActive && editID == nil ? "|" : " ")
-                        .font(cursorFont)
-                        .foregroundStyle(txtColor)
                 } else {
-                    // Fallback for non-animated text (hints, etc.)
-                    Text(viewModel.text)
-                        .font(textFont)
-                        .foregroundStyle(txtColor)
-                    + Text(cursorVisible && viewModel.isActive ? "|" : " ")
-                        .font(cursorFont)
-                        .foregroundStyle(txtColor)
+                    HStack(spacing: 0) {
+                        currentLineContent
+                    }
                 }
             }
             .padding(.horizontal, style.paddingH * scale)
@@ -191,6 +204,68 @@ struct PillView: View {
         )
         .onReceive(blinkPublisher) { _ in cursorVisible.toggle() }
         .onChange(of: viewModel.textCursorIndex) { _, _ in cursorVisible = true }
+    }
+}
+
+private struct LineBreakKey: LayoutValueKey {
+    static let defaultValue: Bool = false
+}
+
+private struct CharFlowLayout: Layout {
+    var contentMaxWidth: CGFloat
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let singleLine = layout(subviews: subviews, availableWidth: .infinity).size
+        if singleLine.width <= contentMaxWidth {
+            return singleLine
+        } else {
+            return layout(subviews: subviews, availableWidth: contentMaxWidth).size
+        }
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let singleLineWidth = layout(subviews: subviews, availableWidth: .infinity).size.width
+        let wrapWidth: CGFloat = singleLineWidth <= contentMaxWidth ? .infinity : contentMaxWidth
+        let frames = layout(subviews: subviews, availableWidth: wrapWidth).frames
+        for (index, frame) in frames.enumerated() {
+            subviews[index].place(
+                at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                proposal: ProposedViewSize(frame.size)
+            )
+        }
+    }
+
+    private func layout(subviews: Subviews, availableWidth: CGFloat) -> (size: CGSize, frames: [CGRect]) {
+        var frames: [CGRect] = []
+        var x: CGFloat = 0
+        var y: CGFloat = 0
+        var lineHeight: CGFloat = 0
+        var totalWidth: CGFloat = 0
+
+        for subview in subviews {
+            if subview[LineBreakKey.self] {
+                // Force line break — place at zero size (every subview must be placed)
+                frames.append(CGRect(x: x, y: y, width: 0, height: 0))
+                x = 0
+                y += lineHeight
+                lineHeight = 0
+                continue
+            }
+
+            let size = subview.sizeThatFits(.unspecified)
+            if x + size.width > availableWidth && x > 0 {
+                // Auto-wrap: start a new line
+                x = 0
+                y += lineHeight
+                lineHeight = 0
+            }
+            frames.append(CGRect(x: x, y: y, width: size.width, height: size.height))
+            x += size.width
+            lineHeight = max(lineHeight, size.height)
+            totalWidth = max(totalWidth, x)
+        }
+
+        return (CGSize(width: totalWidth, height: y + lineHeight), frames)
     }
 }
 
