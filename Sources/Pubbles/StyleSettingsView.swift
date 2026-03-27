@@ -7,6 +7,7 @@ struct StyleSettingsView: View {
     @State private var newThemeName = ""
     @State private var showUnsavedAlert = false
     @State private var pendingThemeSwitch: String? = nil
+    @State private var arrowHovered: Int? = nil
 
     private var style: StyleConfig { configManager.config.style }
 
@@ -46,25 +47,15 @@ struct StyleSettingsView: View {
 
             // Pill preview with carousel arrows
             HStack {
-                Button {
+                carouselArrow(icon: "chevron.left", id: 0) {
                     handleThemeSelection(configManager.peekTheme(forward: false))
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
-
                 Spacer()
                 PillPreview(style: style)
                 Spacer()
-
-                Button {
+                carouselArrow(icon: "chevron.right", id: 1) {
                     handleThemeSelection(configManager.peekTheme(forward: true))
-                } label: {
-                    Image(systemName: "chevron.right")
-                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(20)
@@ -134,15 +125,32 @@ struct StyleSettingsView: View {
             pendingThemeSwitch = filename
             showUnsavedAlert = true
         } else {
-            configManager.setTheme(filename == "default" ? nil : filename)
+            applyTheme(filename)
         }
+    }
+
+    private func applyTheme(_ filename: String) {
+        configManager.setTheme(filename == "default" ? nil : filename)
     }
 
     private func applyPendingSwitch() {
         if let pending = pendingThemeSwitch {
-            configManager.setTheme(pending == "default" ? nil : pending)
+            applyTheme(pending)
             pendingThemeSwitch = nil
         }
+    }
+
+    private func carouselArrow(icon: String, id: Int, action: @escaping () -> Void) -> some View {
+        let hovered = arrowHovered == id
+        return Button(action: action) {
+            Image(systemName: icon)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(hovered ? .primary : .secondary)
+                .frame(width: 28, height: 28)
+                .background(Circle().fill(Color.primary.opacity(hovered ? 0.08 : 0)))
+        }
+        .buttonStyle(.plain)
+        .onHover { h in withAnimation(.easeOut(duration: 0.15)) { arrowHovered = h ? id : nil } }
     }
 
     // MARK: - Settings Form
