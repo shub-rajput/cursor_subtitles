@@ -26,10 +26,22 @@ struct GeneralSettingsView: View {
                         Text("\(Int(s))s").tag(s)
                     }
                 }
+
+                Picker("Fade In", selection: fadeInBinding) {
+                    ForEach([0.0, 0.1, 0.2, 0.3, 0.5], id: \.self) { s in
+                        Text(s == 0 ? "Instant" : "\(s, specifier: "%.1f")s").tag(s)
+                    }
+                }
+
+                Picker("Fade Out", selection: fadeOutBinding) {
+                    ForEach([0.0, 0.2, 0.5, 0.8, 1.0], id: \.self) { s in
+                        Text(s == 0 ? "Instant" : "\(s, specifier: "%.1f")s").tag(s)
+                    }
+                }
             }
 
             Section {
-                Button("Reset All") {
+                Button("Reset Default Themes") {
                     showResetConfirmation = true
                 }
                 .foregroundStyle(.red)
@@ -62,6 +74,20 @@ struct GeneralSettingsView: View {
         Binding(
             get: { behavior.idleTimeout },
             set: { configManager.setBehaviorValue("idleTimeout", $0) }
+        )
+    }
+
+    private var fadeInBinding: Binding<Double> {
+        Binding(
+            get: { behavior.fadeInDuration },
+            set: { configManager.setBehaviorValue("fadeInDuration", $0) }
+        )
+    }
+
+    private var fadeOutBinding: Binding<Double> {
+        Binding(
+            get: { behavior.fadeOutDuration },
+            set: { configManager.setBehaviorValue("fadeOutDuration", $0) }
         )
     }
 
