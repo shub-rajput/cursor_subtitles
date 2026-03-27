@@ -39,7 +39,7 @@ fi
 echo "Built ${APP_NAME}.app v${VERSION}"
 
 # Create release zip (clean, no __MACOSX or ._* junk)
-ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}_${VERSION}.zip"
+ditto -c -k --keepParent "${APP_NAME}.app" "${APP_NAME}_v${VERSION}.zip"
 echo "Packaged ${APP_NAME}_${VERSION}.zip for release"
 
 # Relaunch
