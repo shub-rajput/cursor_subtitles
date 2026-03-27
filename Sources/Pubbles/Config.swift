@@ -1,4 +1,5 @@
 import Foundation
+import AppKit
 
 struct CursorOffset: Codable, Sendable {
     var x: CGFloat = 12
@@ -57,6 +58,7 @@ class ConfigManager: ObservableObject {
     static let shared = ConfigManager()
 
     @Published var config: AppConfig = AppConfig()
+    @Published var isDirty: Bool = false
 
     private nonisolated let configURL: URL = {
         let dir = FileManager.default.homeDirectoryForCurrentUser
@@ -91,6 +93,13 @@ class ConfigManager: ObservableObject {
         ) else { return }
         for file in files where file.pathExtension == "json" {
             let dest = themesURL.appendingPathComponent(file.lastPathComponent)
+            // Skip files the user has saved to — don't overwrite their customizations
+            if FileManager.default.fileExists(atPath: dest.path),
+               let existingData = try? Data(contentsOf: dest),
+               let existingDict = try? JSONSerialization.jsonObject(with: existingData) as? [String: Any],
+               existingDict["userModified"] as? Bool == true {
+                continue
+            }
             if !FileManager.default.fileExists(atPath: dest.path) {
                 try? FileManager.default.copyItem(at: file, to: dest)
             }
@@ -133,14 +142,16 @@ class ConfigManager: ObservableObject {
             // Don't return early — continue loading so defaults are applied properly
         }
 
-        if let themeName = userDict["theme"] as? String {
-            let themeFile = themesURL.appendingPathComponent("\(themeName).json")
-            if let themeData = try? Data(contentsOf: themeFile),
-               let themeDict = try? JSONSerialization.jsonObject(with: themeData) as? [String: Any] {
-                var themeConfig = themeDict
-                themeConfig.removeValue(forKey: "name")
-                merged = ConfigManager.deepMerge(merged, themeConfig)
-            }
+        // Treat nil and "default" identically — both load default.json
+        let rawTheme = userDict["theme"] as? String
+        let themeName = (rawTheme == nil || rawTheme == "default") ? "default" : rawTheme!
+        let themeFile = themesURL.appendingPathComponent("\(themeName).json")
+        if let themeData = try? Data(contentsOf: themeFile),
+           let themeDict = try? JSONSerialization.jsonObject(with: themeData) as? [String: Any] {
+            var themeConfig = themeDict
+            themeConfig.removeValue(forKey: "name")
+            themeConfig.removeValue(forKey: "userModified")
+            merged = ConfigManager.deepMerge(merged, themeConfig)
         }
 
         merged = ConfigManager.deepMerge(merged, userDict)
@@ -158,6 +169,7 @@ class ConfigManager: ObservableObject {
         do {
             let mergedData = try JSONSerialization.data(withJSONObject: merged)
             config = try JSONDecoder().decode(AppConfig.self, from: mergedData)
+            isDirty = userDict["style"] != nil || userDict["colorPreset"] != nil
         } catch {
             print("Failed to load config: \(error). Using defaults.")
             config = AppConfig()
@@ -256,9 +268,113 @@ class ConfigManager: ObservableObject {
     func resetStyleOverrides() {
         guard var dict = readConfigDict() else { return }
         dict.removeValue(forKey: "style")
-        dict.removeValue(forKey: "behavior")
         dict.removeValue(forKey: "colorPreset")
         writeConfigDict(dict)
+    }
+
+    func saveToActiveTheme() {
+        let rawTheme = config.theme
+        let themeName = (rawTheme == nil || rawTheme == "default") ? "default" : rawTheme!
+        let themeFile = themesURL.appendingPathComponent("\(themeName).json")
+
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        guard let styleData = try? encoder.encode(config.style),
+              let styleDict = try? JSONSerialization.jsonObject(with: styleData) as? [String: Any]
+        else { return }
+
+        // Preserve existing name field; fall back to filename
+        var themeDict: [String: Any] = [:]
+        if let existingData = try? Data(contentsOf: themeFile),
+           let existingObj = try? JSONSerialization.jsonObject(with: existingData) as? [String: Any] {
+            themeDict = existingObj
+        }
+        let displayName = themeDict["name"] as? String ?? themeName.capitalized
+        themeDict["name"] = displayName
+        themeDict["style"] = styleDict
+        themeDict["userModified"] = true
+
+        do {
+            let data = try JSONSerialization.data(
+                withJSONObject: themeDict,
+                options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+            )
+            try data.write(to: themeFile)
+        } catch {
+            print("Failed to save theme: \(error)")
+            return
+        }
+
+        // Clear overrides — file watcher reloads both files automatically
+        resetStyleOverrides()
+    }
+
+    func createTheme(name: String) {
+        // Build a filesystem-safe slug
+        let slug = name.lowercased()
+            .replacingOccurrences(of: " ", with: "-")
+            .filter { $0.isLetter || $0.isNumber || $0 == "-" }
+        let filename = slug.isEmpty ? "custom-theme" : slug
+        let themeFile = themesURL.appendingPathComponent("\(filename).json")
+
+        let themeDict: [String: Any] = [
+            "name": name,
+            "userModified": true
+        ]
+
+        do {
+            let data = try JSONSerialization.data(
+                withJSONObject: themeDict,
+                options: [.prettyPrinted, .sortedKeys, .withoutEscapingSlashes]
+            )
+            try data.write(to: themeFile)
+        } catch {
+            print("Failed to create theme: \(error)")
+            return
+        }
+
+        setTheme(filename)
+    }
+
+    func openThemesFolder() {
+        NSWorkspace.shared.open(themesURL)
+    }
+
+    func resetToFactory() {
+        guard let bundlePath = Bundle.main.resourcePath else { return }
+        let bundleThemes = URL(fileURLWithPath: bundlePath).appendingPathComponent("themes")
+        guard let files = try? FileManager.default.contentsOfDirectory(
+            at: bundleThemes, includingPropertiesForKeys: nil
+        ) else { return }
+
+        for file in files where file.pathExtension == "json" {
+            let dest = themesURL.appendingPathComponent(file.lastPathComponent)
+            try? FileManager.default.removeItem(at: dest)
+            try? FileManager.default.copyItem(at: file, to: dest)
+        }
+
+        resetStyleOverrides()
+    }
+
+    /// Returns the filename ("default" for nil) of the next/previous theme without applying it.
+    func peekTheme(forward: Bool) -> String {
+        let themes = availableThemes()
+        guard !themes.isEmpty else { return "default" }
+
+        let currentTheme = config.theme
+        let currentIndex = themes.firstIndex { $0.filename == currentTheme }
+
+        if let currentIndex = currentIndex {
+            if forward {
+                let next = currentIndex + 1
+                return next >= themes.count ? "default" : themes[next].filename
+            } else {
+                let prev = currentIndex - 1
+                return prev < 0 ? "default" : themes[prev].filename
+            }
+        } else {
+            return forward ? themes[0].filename : themes[themes.count - 1].filename
+        }
     }
 
     func cycleTheme(forward: Bool) {
