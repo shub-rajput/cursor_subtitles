@@ -120,8 +120,13 @@ struct HotkeysSettingsView: View {
     }
 
     private func recordButton(action: @escaping () -> Void) -> some View {
-        Button("Record") {
-            action()
+        Button(action: action) {
+            HStack(spacing: 4) {
+                Circle()
+                    .fill(Color.red.opacity(0.8))
+                    .frame(width: 6, height: 6)
+                Text("Record")
+            }
         }
         .font(.caption)
         .buttonStyle(.bordered)
@@ -160,14 +165,14 @@ private struct KeyCap: View {
 
     var body: some View {
         Text(text)
-            .font(.system(size: 11, weight: .medium, design: .rounded))
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
             .padding(.horizontal, 8)
             .padding(.vertical, 4)
-            .background(Color(nsColor: .controlBackgroundColor).opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 5))
+            .background(Color(nsColor: .controlBackgroundColor).opacity(0.6))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
             .overlay(
-                RoundedRectangle(cornerRadius: 5)
-                    .strokeBorder(Color.white.opacity(0.1), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(Color.white.opacity(0.12), lineWidth: 1)
             )
     }
 }
@@ -186,20 +191,28 @@ private struct HotkeyRecorderInline: View {
     }
 
     @State private var eventMonitor: Any?
+    @State private var pulse = false
 
     var body: some View {
         HStack(spacing: 6) {
-            Text(modifierOnly ? "Press a modifier key..." : "Press shortcut...")
-                .font(.system(size: 11, weight: .medium))
-                .foregroundStyle(.secondary)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 5))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 5)
-                        .strokeBorder(Color.accentColor.opacity(0.6), lineWidth: 1)
-                )
+            HStack(spacing: 6) {
+                Circle()
+                    .fill(Color.accentColor)
+                    .frame(width: 6, height: 6)
+                    .opacity(pulse ? 1 : 0.4)
+
+                Text(modifierOnly ? "Press a modifier key..." : "Press shortcut...")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .strokeBorder(Color.accentColor.opacity(pulse ? 0.7 : 0.3), lineWidth: 1.5)
+            )
 
             Button("Cancel") {
                 stopMonitor()
@@ -209,7 +222,12 @@ private struct HotkeyRecorderInline: View {
             .buttonStyle(.bordered)
             .controlSize(.small)
         }
-        .onAppear { startRecording() }
+        .onAppear {
+            startRecording()
+            withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                pulse = true
+            }
+        }
         .onDisappear { stopMonitor() }
     }
 
