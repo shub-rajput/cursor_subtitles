@@ -1,12 +1,12 @@
 import Foundation
 import AppKit
 
-struct CursorOffset: Codable, Sendable {
+struct CursorOffset: Codable, Sendable, Equatable {
     var x: CGFloat = 12
     var y: CGFloat = 12
 }
 
-struct StyleConfig: Codable, Sendable {
+struct StyleConfig: Codable, Sendable, Equatable {
     var backgroundColor: String = "#1F6BE8"
     var textColor: String = "#FFFFFF"
     var placeholderText: String = "Say something"
@@ -154,6 +154,9 @@ class ConfigManager: ObservableObject {
             merged = ConfigManager.deepMerge(merged, themeConfig)
         }
 
+        // Capture baseline (defaults + theme) before user overrides for isDirty comparison
+        let baselineMerged = merged
+
         merged = ConfigManager.deepMerge(merged, userDict)
 
         // Apply colorPreset only if the user hasn't manually set style.backgroundColor
@@ -169,7 +172,12 @@ class ConfigManager: ObservableObject {
         do {
             let mergedData = try JSONSerialization.data(withJSONObject: merged)
             config = try JSONDecoder().decode(AppConfig.self, from: mergedData)
-            isDirty = userDict["style"] != nil || userDict["colorPreset"] != nil
+            if let baselineData = try? JSONSerialization.data(withJSONObject: baselineMerged),
+               let baselineConfig = try? JSONDecoder().decode(AppConfig.self, from: baselineData) {
+                isDirty = config.style != baselineConfig.style
+            } else {
+                isDirty = false
+            }
         } catch {
             print("Failed to load config: \(error). Using defaults.")
             config = AppConfig()
