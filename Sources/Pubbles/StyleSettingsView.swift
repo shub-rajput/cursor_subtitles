@@ -3,6 +3,10 @@ import AppKit
 
 struct StyleSettingsView: View {
     @ObservedObject private var configManager = ConfigManager.shared
+    @State private var showNewThemeAlert = false
+    @State private var newThemeName = ""
+    @State private var showUnsavedAlert = false
+    @State private var pendingThemeSwitch: String? = nil
 
     private var style: StyleConfig { configManager.config.style }
 
@@ -23,32 +27,27 @@ struct StyleSettingsView: View {
 
     private var previewArea: some View {
         VStack(spacing: 12) {
-            // Theme row
+            // Theme picker row
             HStack {
-                Text(currentThemeName)
-                    .font(.subheadline)
+                themePicker
                 Spacer()
-                Button("Edit Config File") {
-                    NSWorkspace.shared.open(
-                        FileManager.default.homeDirectoryForCurrentUser
-                            .appendingPathComponent(".config/pubbles/config.json")
-                    )
+                if configManager.isDirty {
+                    Button("Revert") {
+                        configManager.resetStyleOverrides()
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button("Save") {
+                        configManager.saveToActiveTheme()
+                    }
+                    .buttonStyle(.borderedProminent)
                 }
-                .buttonStyle(.plain)
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                Button("Reset") {
-                    configManager.resetStyleOverrides()
-                }
-                .buttonStyle(.plain)
-                .font(.caption)
-                .foregroundStyle(.secondary)
             }
 
-            // Theme carousel with arrows
+            // Pill preview with carousel arrows
             HStack {
                 Button {
-                    configManager.cycleTheme(forward: false)
+                    handleThemeSelection(configManager.peekTheme(forward: false))
                 } label: {
                     Image(systemName: "chevron.left")
                         .foregroundStyle(.secondary)
@@ -60,32 +59,90 @@ struct StyleSettingsView: View {
                 Spacer()
 
                 Button {
-                    configManager.cycleTheme(forward: true)
+                    handleThemeSelection(configManager.peekTheme(forward: true))
                 } label: {
                     Image(systemName: "chevron.right")
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
             }
-
-            // Page indicator dots (placeholder)
-            HStack(spacing: 6) {
-                ForEach(0..<4, id: \.self) { i in
-                    Circle()
-                        .fill(i == 0 ? Color.secondary : Color.secondary.opacity(0.3))
-                        .frame(width: 6, height: 6)
-                }
-            }
         }
         .padding(20)
         .background(.quaternary.opacity(0.5))
         .clipped()
+        .alert("New Theme", isPresented: $showNewThemeAlert) {
+            TextField("Theme name", text: $newThemeName)
+            Button("Create") {
+                let name = newThemeName.trimmingCharacters(in: .whitespaces)
+                if !name.isEmpty { configManager.createTheme(name: name) }
+                newThemeName = ""
+            }
+            Button("Cancel", role: .cancel) { newThemeName = "" }
+        } message: {
+            Text("Name your new theme. It will start from the default settings.")
+        }
+        .alert("Unsaved Changes", isPresented: $showUnsavedAlert) {
+            Button("Save") {
+                configManager.saveToActiveTheme()
+                applyPendingSwitch()
+            }
+            Button("Revert") {
+                configManager.resetStyleOverrides()
+                applyPendingSwitch()
+            }
+            Button("Cancel", role: .cancel) {
+                pendingThemeSwitch = nil
+            }
+        } message: {
+            Text("You have unsaved changes to \(currentThemeName). Save or revert before switching themes.")
+        }
     }
 
     private var currentThemeName: String {
-        guard let themeFile = configManager.config.theme else { return "Default" }
+        let themeFile = configManager.config.theme
+        guard let themeFile, themeFile != "default" else { return "Default" }
         let themes = configManager.availableThemes()
         return themes.first(where: { $0.filename == themeFile })?.name ?? themeFile
+    }
+
+    private var themePicker: some View {
+        let themes = configManager.availableThemes().filter { $0.filename != "default" }
+
+        return Menu {
+            Button("Default") { handleThemeSelection("default") }
+
+            if !themes.isEmpty {
+                Divider()
+                ForEach(themes, id: \.filename) { theme in
+                    Button(theme.name) { handleThemeSelection(theme.filename) }
+                }
+            }
+
+            Divider()
+            Button("New Theme...") { showNewThemeAlert = true }
+            Button("Open Themes Folder") { configManager.openThemesFolder() }
+        } label: {
+            Text(currentThemeName)
+        }
+        .fixedSize()
+    }
+
+    private func handleThemeSelection(_ filename: String) {
+        let current = configManager.config.theme ?? "default"
+        guard filename != current else { return }
+        if configManager.isDirty {
+            pendingThemeSwitch = filename
+            showUnsavedAlert = true
+        } else {
+            configManager.setTheme(filename == "default" ? nil : filename)
+        }
+    }
+
+    private func applyPendingSwitch() {
+        if let pending = pendingThemeSwitch {
+            configManager.setTheme(pending == "default" ? nil : pending)
+            pendingThemeSwitch = nil
+        }
     }
 
     // MARK: - Settings Form
@@ -119,7 +176,8 @@ struct StyleSettingsView: View {
                                 let base = style.backgroundColor
                                 configManager.setStyleValue("backgroundGradient", [base, base])
                             } else {
-                                configManager.removeStyleValue("backgroundGradient")
+                                // Use NSNull to explicitly override any theme-level gradient with null
+                                configManager.setStyleValue("backgroundGradient", NSNull())
                             }
                         }
                     )) {
@@ -176,6 +234,12 @@ struct StyleSettingsView: View {
                 Text("1.3x").tag(CGFloat(1.3))
                 Text("1.6x").tag(CGFloat(1.6))
                 Text("2x").tag(CGFloat(2.0))
+            }
+
+            Picker("Max Width", selection: maxWidthPickerBinding) {
+                ForEach([150, 200, 250, 300, 400, 500, 600], id: \.self) { w in
+                    Text("\(w)px").tag(CGFloat(w))
+                }
             }
         }
     }
@@ -350,6 +414,13 @@ struct StyleSettingsView: View {
         Binding(
             get: { style.pillScale },
             set: { configManager.setStyleValue("pillScale", $0) }
+        )
+    }
+
+    private var maxWidthPickerBinding: Binding<CGFloat> {
+        Binding(
+            get: { style.maxWidth },
+            set: { configManager.setStyleValue("maxWidth", $0) }
         )
     }
 
