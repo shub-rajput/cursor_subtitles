@@ -193,7 +193,18 @@ final class EventManager {
         if mods.contains(.command), let action = cmdArrowActions[keyCode] {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
             if isActive {
-                DispatchQueue.main.async { MainActor.assumeIsolated { action() } }
+                // Theme cycle hotkeys (Cmd+Up/Down) are blocked when there are unsaved changes
+                if keyCode == 125 || keyCode == 126 {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated {
+                            if !ConfigManager.shared.isDirty {
+                                action()
+                            }
+                        }
+                    }
+                } else {
+                    DispatchQueue.main.async { MainActor.assumeIsolated { action() } }
+                }
                 return nil
             }
             return Unmanaged.passUnretained(event)
