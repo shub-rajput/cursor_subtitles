@@ -22,6 +22,7 @@ struct StyleSettingsView: View {
             settingsForm
         }
         .navigationTitle("Style")
+        .onTapGesture { NSApp.keyWindow?.makeFirstResponder(nil) }
     }
 
     // MARK: - Preview Area (sticky, non-scrolling)
@@ -249,6 +250,9 @@ struct StyleSettingsView: View {
                     Text("\(w)px").tag(CGFloat(w))
                 }
             }
+
+            TextField("Placeholder Text", text: placeholderTextBinding)
+                .onSubmit { NSApp.keyWindow?.makeFirstResponder(nil) }
         }
     }
 
@@ -272,8 +276,8 @@ struct StyleSettingsView: View {
             Toggle("Sharp Corner", isOn: pointerCornerBinding)
 
             Picker("Corner Radius", selection: cornerRadiusPickerBinding) {
-                ForEach([4, 8, 12, 16, 20, 24], id: \.self) { r in
-                    Text("\(r)px").tag(CGFloat(r))
+                ForEach([0, 4, 8, 12, 16, 20, 24], id: \.self) { r in
+                    Text(r == 0 ? "None" : "\(r)px").tag(CGFloat(r))
                 }
             }
         }
@@ -401,6 +405,13 @@ struct StyleSettingsView: View {
         Binding(
             get: { Color(hex: style.drawingLineColor) ?? .red },
             set: { configManager.setStyleValue("drawingLineColor", $0.toHex()) }
+        )
+    }
+
+    private var placeholderTextBinding: Binding<String> {
+        Binding(
+            get: { style.placeholderText },
+            set: { configManager.setStyleValue("placeholderText", $0) }
         )
     }
 
