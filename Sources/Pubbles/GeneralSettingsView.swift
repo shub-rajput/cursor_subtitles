@@ -2,8 +2,8 @@ import SwiftUI
 
 struct GeneralSettingsView: View {
     @ObservedObject private var configManager = ConfigManager.shared
+    @State private var showResetConfirmation = false
 
-    private var style: StyleConfig { configManager.config.style }
     private var behavior: BehaviorConfig { configManager.config.behavior }
 
     var body: some View {
@@ -19,11 +19,6 @@ struct GeneralSettingsView: View {
                     }
                 }
 
-                Picker("Max Width", selection: maxWidthPickerBinding) {
-                    ForEach([150, 200, 250, 300, 400, 500, 600], id: \.self) { w in
-                        Text("\(w)px").tag(CGFloat(w))
-                    }
-                }
             }
 
             Section {
@@ -33,19 +28,26 @@ struct GeneralSettingsView: View {
                     }
                 }
             }
+            Section {
+                Button("Reset to Factory Defaults") {
+                    showResetConfirmation = true
+                }
+                .foregroundStyle(.red)
+            }
         }
         .formStyle(.grouped)
+        .alert("Reset to Factory Defaults?", isPresented: $showResetConfirmation) {
+            Button("Reset", role: .destructive) {
+                configManager.resetToFactory()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This will restore all built-in themes to their original values and clear any unsaved changes. Your custom themes will not be affected.")
+        }
         .navigationTitle("Settings")
     }
 
     // MARK: - Bindings
-
-    private var maxWidthPickerBinding: Binding<CGFloat> {
-        Binding(
-            get: { style.maxWidth },
-            set: { configManager.setStyleValue("maxWidth", $0) }
-        )
-    }
 
     private var charLimitPickerBinding: Binding<Int> {
         Binding(
