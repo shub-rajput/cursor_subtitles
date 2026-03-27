@@ -52,6 +52,8 @@ CursorTracker (60 FPS mouse position via timer)
 - **PillView / PillContainerView** — SwiftUI rendering: pill shape, text, blinking cursor, positioned at mouse coordinates with fade animations. PillContainerView also hosts `DrawingCanvasView` (SwiftUI Canvas for stroke rendering)
 - **ConfigManager** — Singleton managing config with deep-merge resolution (defaults → theme → user overrides), DispatchSource file watching for live reload, theme file seeding from bundle, and menubar helpers (`setTheme`, `setColor`, `availableThemes`)
 - **CursorTracker** — Timer-based mouse position polling, updates the view model
+- **SettingsWindowController** — NSWindowController hosting `SettingsView` (SwiftUI). Switches activation policy to `.regular` on open and back to `.accessory` on close so the settings window can receive focus without making the app appear in the Dock permanently
+- **UpdateChecker** — Singleton that checks GitHub releases API for newer versions, prompts the user, and self-updates by downloading and running the install script via a detached `launchctl` job before quitting. Skipped versions are persisted in `UserDefaults`
 
 ## Key Patterns
 

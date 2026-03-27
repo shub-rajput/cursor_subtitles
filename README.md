@@ -52,23 +52,27 @@ open Pubbles.app
 
 1. Press **Cmd+/** (editable) to activate the subtitle bubble
 2. Type your text — it appears in a pill near your pointer
-3. Press **Enter** for a new line
+3. Press **Enter** for a new line (or wrap across multiple lines with multi-line mode on)
 4. Press **Escape** or click anywhere to dismiss
 5. The pill follows your pointer and fades after 10s of inactivity
 
-### Drawing Mode
+### Doodle Mode
 
-Enable drawing from the menubar **Drawing** toggle. When enabled:
+Press **Cmd+D** (editable) to toggle doodle mode — no need for the pill to be active first. When enabled:
 
-- Activate the pill with **Cmd+/** as usual
 - Hold **Cmd** and click+drag to draw on screen (red strokes by default)
 - Release **Cmd** to stop drawing — type normally again
+- Press **Cmd+/** while doodling to show the pill on top; press **Cmd+/** or **Escape** to reset everything
 - A colored dot appears at the cursor while Cmd is held to indicate drawing is ready
 - Drawing resets the idle timer — strokes and pill fade together
 - Customize line color and width via `style.drawingLineColor` and `style.drawingLineWidth` in config
+- The hold-modifier key (default: `cmd`) is configurable via `drawingHotkey` in config
 
-### Menubar Settings
-<img width="1000" height="590" alt="CleanShot 2026-03-06 at 22 48 35" src="https://github.com/user-attachments/assets/7587098e-7097-47af-becd-a17614c2d8da" />
+### Settings
+
+Open **Settings** from the menubar icon for a full settings window with tabs for Style, Hotkeys, General, and About.
+
+**Style tab** — live preview with theme picker, Save/Revert buttons (shown when you have unsaved changes), and all visual controls. You can save your tweaks back to the active theme, create a new theme from your current settings, or reset all built-in themes to factory defaults.
 
 ### Keyboard Shortcuts
 
@@ -76,12 +80,13 @@ While the pill is active:
 
 | Shortcut | Action |
 |----------|--------|
-| **Cmd+/** (editable)| Toggle pill on/off |
+| **Cmd+/** (editable) | Toggle pill on/off |
+| **Cmd+D** (editable) | Toggle doodle mode on/off |
 | **Cmd+Up** | Previous theme |
 | **Cmd+Down** | Next theme |
 | **Cmd+Right** | Scale pill up |
 | **Cmd+Left** | Scale pill down |
-| **Hold Cmd + click+drag** | Draw on screen |
+| **Hold Cmd + click+drag** | Draw on screen (in doodle mode) |
 | **Escape** | Dismiss pill |
 | **Enter** | New line |
 
@@ -184,6 +189,8 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 
 **Top-level:**
 - `hotkey` — trigger shortcut (default: `cmd+/`)
+- `drawingHotkey` — modifier key for hold-to-draw (default: `cmd`)
+- `drawingToggleHotkey` — dedicated doodle mode toggle (default: `cmd+d`)
 - `theme` — theme name matching a file in `~/.config/pubbles/themes/` (default: none)
 
 **Style** (`style.*`):
@@ -197,10 +204,10 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `fontSize` — font size (default: `14`)
 - `pillScale` — overall pill scale, presets: `0.8`, `1.0`, `1.3`, `1.6`, `2.0` (default: `1.0`)
 - `fontFamily` — font name or `system` (default: `system`)
-- `fontWeight` — font weight: `ultraLight`, `thin`, `light`, `regular`, `medium`, `semibold`, `bold`, `heavy`, `black` (default: `medium`)
-- `cornerRadius` — pill roundness (default: `20`)
+- `fontWeight` — font weight: `ultraLight`, `thin`, `light`, `regular`, `medium`, `semibold`, `bold`, `heavy`, `black` (default: `regular`)
+- `cornerRadius` — pill roundness (default: `16`)
 - `pointerCorner` — sharp top-left corner pointing at pointer (default: `true`)
-- `paddingH` — horizontal padding (default: `16`)
+- `paddingH` — horizontal padding (default: `12`)
 - `paddingV` — vertical padding (default: `8`)
 - `maxWidth` — max pill width (default: `300`)
 - `cursorOffset.x` — horizontal offset from pointer (default: `12`)
@@ -220,7 +227,8 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `idleTimeout` — seconds before fade (default: `10`)
 - `fadeOutDuration` — fade out duration in seconds (default: `0.5`)
 - `fadeInDuration` — fade in duration in seconds (default: `0.2`)
-- `charLimit` — max characters per line (default: `30`)
+- `charLimit` — max characters per line, ignored when `multiLine` is on (default: `30`)
+- `multiLine` — wrap text across multiple lines instead of a single scrolling line (default: `false`)
 
 Changes apply instantly — no restart needed.
 
