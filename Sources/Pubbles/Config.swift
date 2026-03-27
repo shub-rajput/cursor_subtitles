@@ -356,21 +356,19 @@ class ConfigManager: ObservableObject {
         resetStyleOverrides()
     }
 
-    /// Returns the filename ("default" for nil) of the next/previous theme without applying it.
+    /// Returns the filename of the next/previous theme in the sorted list, wrapping around.
     func peekTheme(forward: Bool) -> String {
         let themes = availableThemes()
         guard !themes.isEmpty else { return "default" }
 
-        let currentTheme = config.theme
+        let currentTheme = config.theme ?? "default"
         let currentIndex = themes.firstIndex { $0.filename == currentTheme }
 
         if let currentIndex = currentIndex {
             if forward {
-                let next = currentIndex + 1
-                return next >= themes.count ? "default" : themes[next].filename
+                return themes[(currentIndex + 1) % themes.count].filename
             } else {
-                let prev = currentIndex - 1
-                return prev < 0 ? "default" : themes[prev].filename
+                return themes[(currentIndex - 1 + themes.count) % themes.count].filename
             }
         } else {
             return forward ? themes[0].filename : themes[themes.count - 1].filename
