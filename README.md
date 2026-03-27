@@ -72,7 +72,7 @@ Press **Cmd+D** (editable) to toggle doodle mode — no need for the pill to be 
 
 Open **Settings** from the menubar icon for a full settings window with tabs for Style, Hotkeys, General, and About.
 
-**Style tab** — live preview with theme picker, Save/Revert buttons (shown when you have unsaved changes), and all visual controls. You can save your tweaks back to the active theme, create a new theme from your current settings, or reset all built-in themes to factory defaults.
+<img width="770" height="639" alt="CleanShot 2026-03-27 at 10 51 11" src="https://github.com/user-attachments/assets/5863cfe9-cba8-445a-9f71-3c0cf24e61e4" />
 
 ### Keyboard Shortcuts
 
