@@ -17,6 +17,14 @@ enum SettingsTab: String, CaseIterable, Identifiable {
         }
     }
 
+    var iconColor: Color {
+        switch self {
+        case .style: .blue
+        case .hotkeys: .indigo
+        case .settings: .gray
+        case .about: .gray
+        }
+    }
 }
 
 struct SettingsView: View {
@@ -33,8 +41,20 @@ struct SettingsView: View {
 
     private var sidebar: some View {
         List(SettingsTab.allCases, selection: $selectedTab) { tab in
-            Label(tab.rawValue, systemImage: tab.icon)
-                .tag(tab)
+            Label {
+                Text(tab.rawValue)
+            } icon: {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.white)
+                    .frame(width: 22, height: 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: 5, style: .continuous)
+                            .fill(tab.iconColor.gradient)
+                    )
+            }
+            .tag(tab)
+            .listRowInsets(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
         }
         .listStyle(.sidebar)
         .safeAreaInset(edge: .bottom) {
@@ -73,7 +93,6 @@ struct SettingsView: View {
             AboutSettingsView()
         }
     }
-
 }
 
 // MARK: - About
@@ -109,12 +128,21 @@ struct AboutSettingsView: View {
                     .foregroundStyle(.secondary)
 
                 HStack(spacing: 12) {
-                    Button("Support Pubbles ♥") {
+                    Button {
                         NSWorkspace.shared.open(URL(string: "https://ko-fi.com/shubhangrajput")!)
+                    } label: {
+                        Label("Support Pubbles", systemImage: "heart.fill")
+                            .font(.system(size: 12, weight: .medium))
                     }
-                    Button("GitHub") {
+                    .buttonStyle(.bordered)
+
+                    Button {
                         NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles")!)
+                    } label: {
+                        Label("GitHub", systemImage: "arrow.up.right.square")
+                            .font(.system(size: 12, weight: .medium))
                     }
+                    .buttonStyle(.bordered)
                 }
 
                 Divider()
@@ -145,7 +173,7 @@ struct AboutSettingsView: View {
 
             Spacer()
 
-            Text("Copyright © 2026 Shubhang Haresh Rajput")
+            Text("Copyright \u{00A9} 2026 Shubhang Haresh Rajput")
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .padding(.bottom, 20)
