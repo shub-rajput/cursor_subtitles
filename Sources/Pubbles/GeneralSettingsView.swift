@@ -18,7 +18,6 @@ struct GeneralSettingsView: View {
                         }
                     }
                 }
-
             }
 
             Section {
@@ -28,12 +27,15 @@ struct GeneralSettingsView: View {
                     }
                 }
             }
+
             Section {
-                Button("Reset to Factory Defaults") {
+                Button("Reset All") {
                     showResetConfirmation = true
                 }
                 .foregroundStyle(.red)
             }
+            .listRowBackground(Color.clear)
+            .listSectionSeparator(.hidden)
         }
         .formStyle(.grouped)
         .alert("Reset to Factory Defaults?", isPresented: $showResetConfirmation) {
