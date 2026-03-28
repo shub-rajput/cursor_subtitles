@@ -203,6 +203,9 @@ struct AboutSettingsView: View {
 
 struct PillPreview: View {
     let style: StyleConfig
+    var text: String = "Hello world"
+
+    @State private var appeared = false
 
     private var bgColor: Color { Color(hex: style.backgroundColor) ?? .blue }
     private var txtColor: Color { Color(hex: style.textColor) ?? .white }
@@ -245,7 +248,7 @@ struct PillPreview: View {
     }
 
     var body: some View {
-        Text("Hello world")
+        Text(text)
             .font(textFont)
             .foregroundStyle(txtColor)
             .padding(.horizontal, style.paddingH)
@@ -264,6 +267,13 @@ struct PillPreview: View {
                     lineWidth: style.borderWidth
                 )
             )
+            .scaleEffect(appeared ? 1.0 : 0.72)
+            .opacity(appeared ? 1.0 : 0.0)
+            .onAppear {
+                withAnimation(.spring(response: 0.38, dampingFraction: 0.62)) {
+                    appeared = true
+                }
+            }
     }
 }
 
