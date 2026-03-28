@@ -2,18 +2,20 @@ import SwiftUI
 import AppKit
 
 private let pillPreviewTexts = [
-    "Pubblin'",
-    "Looking good",
-    "Hmm...I like it",
+    "Get Pubblin'",
+    "Looking good today",
+    "Hmm...ship it",
     "That's a vibe",
-    "I'd say that's a yes",
+    "Welp ¯\\_(ツ)_/¯",
     "Ooh, fancy!",
     "Chef's kiss",
-    "You should dip fries in coke",
-    "I'm trapped in this pill!",
-    "Nice one",
-    "Mama Mia!",
-    "Spontaneously combusts",
+    "Dip them fries in coke",
+    "No Pubbles harmed...yet",
+    "You are now breathing manually",
+    "Imagine...touching grass",
+    "Beep Boop I stole your soup",
+    "T̸̢͈͔̱̝̓̀̔̚ḩ̷̼̱͒͛̆̓͐̓̊͘i̵̢͓͈̎̄̀̍s̸̡̬̣̲̩̿̆̂̓̅̅ ̸͕̰̗͖͇̉̋̈́̆̈́i̵̢͓͈̎̄̀̍s̴̢̨̛͙͓͖̩͐̑̓̉͘ ̸͕̰̗͖͇̉̋̈́̆̈́F̸̡̬̣̲̩̿̆̂̓̅̅i̵̢͓͈̎̄̀̍n̴̦̹̯̟͕͇̮̩̈̐̔̀̿e̴̢̨̛͙͓͖̩͐̑̓̉͘",
+    "Bruh",
 ]
 
 struct StyleSettingsView: View {
