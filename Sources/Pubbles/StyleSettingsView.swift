@@ -320,7 +320,7 @@ struct StyleSettingsView: View {
             HStack {
                 Text("Border Color")
                 Spacer()
-                ColorPicker("", selection: borderColorBinding, supportsOpacity: false)
+                ColorPicker("", selection: borderColorWithOpacityBinding, supportsOpacity: true)
                     .labelsHidden()
             }
 
@@ -444,10 +444,19 @@ struct StyleSettingsView: View {
         )
     }
 
-    private var borderColorBinding: Binding<Color> {
+    private var borderColorWithOpacityBinding: Binding<Color> {
         Binding(
-            get: { Color(hex: style.borderColor) ?? .white },
-            set: { configManager.setStyleValue("borderColor", $0.toHex()) }
+            get: {
+                (Color(hex: style.borderColor) ?? .white)
+                    .opacity(style.borderOpacity)
+            },
+            set: { newColor in
+                let nsColor = NSColor(newColor)
+                let opacity = Double(nsColor.alphaComponent)
+                let opaque = nsColor.withAlphaComponent(1.0)
+                configManager.setStyleValue("borderColor", Color(opaque).toHex())
+                configManager.setStyleValue("borderOpacity", opacity)
+            }
         )
     }
 
