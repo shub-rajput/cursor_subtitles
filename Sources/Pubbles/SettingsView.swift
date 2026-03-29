@@ -303,12 +303,13 @@ class GradientPickerView: NSView {
     var onColorsChanged: (([String]) -> Void)?
     private var selectedIndex: Int?
     private var colorObserver: Any?
+    private var clickMonitor: Any?
+    private var keyMonitor: Any?
 
     private let barHeight: CGFloat = 14
     private let handleWidth: CGFloat = 8
     private let handleHeight: CGFloat = 20
 
-    override var acceptsFirstResponder: Bool { true }
     override var isFlipped: Bool { true }
 
     override var intrinsicContentSize: NSSize {
@@ -388,7 +389,6 @@ class GradientPickerView: NSView {
     }
 
     override func mouseDown(with event: NSEvent) {
-        window?.makeFirstResponder(self)
         let point = convert(event.locationInWindow, from: nil)
 
         // Check if a handle was hit
@@ -417,34 +417,23 @@ class GradientPickerView: NSView {
         }
     }
 
-    override func keyDown(with event: NSEvent) {
-        // Delete/backspace removes selected stop
-        if event.keyCode == 51 || event.keyCode == 117 { // backspace or delete
-            if let index = selectedIndex, colors.count > 2, colors.indices.contains(index) {
-                closeColorPanel()
-                colors.remove(at: index)
-                selectedIndex = nil
-                onColorsChanged?(colors)
-                needsDisplay = true
-                return
-            }
-        }
-        // Escape deselects
-        if event.keyCode == 53 {
-            closeColorPanel()
-            selectedIndex = nil
-            needsDisplay = true
-            return
-        }
-        super.keyDown(with: event)
-    }
-
-    private func openColorPanel(for index: Int) {
-        // Remove previous observer
+    private func removeMonitors() {
         if let obs = colorObserver {
             NotificationCenter.default.removeObserver(obs)
             colorObserver = nil
         }
+        if let monitor = clickMonitor {
+            NSEvent.removeMonitor(monitor)
+            clickMonitor = nil
+        }
+        if let monitor = keyMonitor {
+            NSEvent.removeMonitor(monitor)
+            keyMonitor = nil
+        }
+    }
+
+    private func openColorPanel(for index: Int) {
+        removeMonitors()
 
         let panel = NSColorPanel.shared
         panel.showsAlpha = false
@@ -466,19 +455,45 @@ class GradientPickerView: NSView {
                 self.needsDisplay = true
             }
         }
-    }
 
-    private func closeColorPanel() {
-        if let obs = colorObserver {
-            NotificationCenter.default.removeObserver(obs)
-            colorObserver = nil
+        // Deselect on clicks outside this view and the color panel
+        clickMonitor = NSEvent.addLocalMonitorForEvents(matching: .leftMouseDown) { [weak self] event in
+            guard let self else { return event }
+            if event.window == panel { return event }
+            let point = self.convert(event.locationInWindow, from: nil)
+            if event.window == self.window && self.bounds.contains(point) { return event }
+            self.deselect()
+            return event
         }
-        NSColorPanel.shared.close()
+
+        // Handle delete/escape even when color panel has focus
+        keyMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { [weak self] event in
+            guard let self, self.selectedIndex != nil else { return event }
+            if event.keyCode == 51 || event.keyCode == 117 {
+                if let index = self.selectedIndex, self.colors.count > 2, self.colors.indices.contains(index) {
+                    self.colors.remove(at: index)
+                    self.onColorsChanged?(self.colors)
+                    self.deselect()
+                    return nil
+                }
+            }
+            if event.keyCode == 53 {
+                self.deselect()
+                return nil
+            }
+            return event
+        }
     }
 
     override func viewDidMoveToWindow() {
         super.viewDidMoveToWindow()
-        if window == nil { closeColorPanel() }
+        if window == nil { deselect() }
+    }
+
+    private func deselect() {
+        removeMonitors()
+        selectedIndex = nil
+        needsDisplay = true
     }
 }
 
