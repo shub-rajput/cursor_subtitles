@@ -1,4 +1,56 @@
+import AppKit
 import SwiftUI
+
+// MARK: - Shared Accessibility Monitor
+
+@MainActor
+class AccessibilityMonitor: ObservableObject {
+    static let shared = AccessibilityMonitor()
+    @Published private(set) var isGranted = AXIsProcessTrusted()
+
+    private init() {
+        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async { self?.isGranted = AXIsProcessTrusted() }
+        }
+    }
+}
+
+// MARK: - Shared Accessibility Banner
+
+struct AccessibilityBannerSection: View {
+    @ObservedObject private var monitor = AccessibilityMonitor.shared
+
+    var body: some View {
+        if !monitor.isGranted {
+            Section {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(alignment: .top) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Please Enable Accessibility Permission")
+                            Text("Already showing as enabled? Quit the app, tap '−' on the Accessibility page to remove the permission, then re-open and re-grant.")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                        }
+                        Spacer()
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundStyle(.orange)
+                    }
+                    HStack(spacing: 8) {
+                        Button("Open Settings") {
+                            NSWorkspace.shared.open(
+                                URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+                            )
+                        }
+                        .buttonStyle(.borderedProminent)
+                        Button("Help") {
+                            NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles/issues")!)
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 enum SettingsTab: String, CaseIterable, Identifiable {
     case style = "Style"
@@ -140,6 +192,14 @@ struct AboutSettingsView: View {
                         NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles")!)
                     } label: {
                         Label("GitHub", systemImage: "arrow.up.right.square")
+                            .font(.system(size: 12, weight: .medium))
+                    }
+                    .buttonStyle(.bordered)
+
+                    Button {
+                        NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles/issues")!)
+                    } label: {
+                        Label("Help", systemImage: "questionmark.circle")
                             .font(.system(size: 12, weight: .medium))
                     }
                     .buttonStyle(.bordered)
@@ -307,7 +367,7 @@ class GradientPickerView: NSView {
     private var keyMonitor: Any?
 
     private let barHeight: CGFloat = 14
-    private let handleWidth: CGFloat = 8
+    private let handleWidth: CGFloat = 12
     private let handleHeight: CGFloat = 20
 
     override var isFlipped: Bool { true }
@@ -370,7 +430,7 @@ class GradientPickerView: NSView {
             let isSelected = selectedIndex == i
             if isSelected {
                 NSColor.white.setStroke()
-                path.lineWidth = 2
+                path.lineWidth = 4
             } else {
                 NSColor.white.withAlphaComponent(0.5).setStroke()
                 path.lineWidth = 1

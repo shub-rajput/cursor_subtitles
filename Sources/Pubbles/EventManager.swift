@@ -13,11 +13,11 @@ final class EventManager {
         self.viewModel = viewModel
     }
 
+    var onPermissionMissing: (() -> Void)?
+
     func start() {
         if !AXIsProcessTrusted() {
-            let promptKey = kAXTrustedCheckOptionPrompt.takeUnretainedValue() as String
-            let options = [promptKey: true]
-            _ = AXIsProcessTrustedWithOptions(options as CFDictionary)
+            onPermissionMissing?()
             waitForPermission()
             return
         }

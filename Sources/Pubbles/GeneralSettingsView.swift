@@ -8,6 +8,7 @@ struct GeneralSettingsView: View {
 
     var body: some View {
         Form {
+            AccessibilityBannerSection()
             Section {
                 Toggle("Multi-line Pubble", isOn: multiLineBinding)
 

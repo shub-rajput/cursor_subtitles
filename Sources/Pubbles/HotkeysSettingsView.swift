@@ -12,6 +12,7 @@ struct HotkeysSettingsView: View {
 
     var body: some View {
         Form {
+            AccessibilityBannerSection()
             Section {
                 // Toggle Pubble mode
                 HStack {

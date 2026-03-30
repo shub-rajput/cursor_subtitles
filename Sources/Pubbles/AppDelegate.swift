@@ -19,6 +19,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         settingsWindowController = SettingsWindowController()
         settingsWindowController.showWindow()
         overlayController.show()
+        eventManager.onPermissionMissing = { [weak self] in
+            self?.settingsWindowController.showWindow()
+        }
         eventManager.start()
         cursorTracker.start()
 

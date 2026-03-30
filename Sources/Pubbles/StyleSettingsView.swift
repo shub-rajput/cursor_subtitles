@@ -27,7 +27,6 @@ struct StyleSettingsView: View {
     @State private var arrowHovered: Int? = nil
     @State private var previewText = pillPreviewTexts.randomElement() ?? "Hello world"
     @State private var previewID = UUID()
-    @State private var isAccessibilityGranted = AXIsProcessTrusted()
 
     private var style: StyleConfig { configManager.config.style }
 
@@ -43,13 +42,6 @@ struct StyleSettingsView: View {
         }
         .navigationTitle("Style")
         .onTapGesture { NSApp.keyWindow?.makeFirstResponder(nil) }
-        .task {
-            isAccessibilityGranted = AXIsProcessTrusted()
-            while !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 1_000_000_000)
-                isAccessibilityGranted = AXIsProcessTrusted()
-            }
-        }
     }
 
     // MARK: - Preview Area (sticky, non-scrolling)
@@ -188,39 +180,13 @@ struct StyleSettingsView: View {
 
     private var settingsForm: some View {
         Form {
-            if !isAccessibilityGranted {
-                accessibilityBannerSection
-            }
+            AccessibilityBannerSection()
             appearanceSection
             borderSection
             shadowSection
             drawingSection
         }
         .formStyle(.grouped)
-    }
-
-    // MARK: - Accessibility Banner
-
-    private var accessibilityBannerSection: some View {
-        Section {
-            HStack(alignment: .center) {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(.orange)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Accessibility Permission Required")
-                    Text("Pubbles sadly won't work without it")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Spacer()
-                Button("Open Settings") {
-                    NSWorkspace.shared.open(
-                        URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-                    )
-                }
-                .buttonStyle(.borderedProminent)
-            }
-        }
     }
 
     // MARK: - Appearance
