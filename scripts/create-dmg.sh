@@ -3,7 +3,7 @@ set -e
 
 APP_NAME="Pubbles"
 VERSION=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Info.plist 2>/dev/null || echo "unknown")
-DMG_NAME="${APP_NAME}_${VERSION}.dmg"
+DMG_NAME="${APP_NAME}_v${VERSION}.dmg"
 DMG_TEMP="dmg_temp"
 DMG_RW="${APP_NAME}_rw.dmg"
 VOLUME_NAME="${APP_NAME}"
