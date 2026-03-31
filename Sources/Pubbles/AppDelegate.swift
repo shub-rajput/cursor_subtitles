@@ -1,4 +1,5 @@
 import AppKit
+import Combine
 
 @MainActor
 class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
@@ -9,11 +10,48 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var cursorTracker: CursorTracker!
     private var isEnabled = true
     private var settingsWindowController: SettingsWindowController!
+    private var speechManager: SpeechManager!
+    private var dictationCancellable: AnyCancellable?
+    private var dictationPermissionsGranted = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         overlayController = OverlayController(viewModel: viewModel)
         eventManager = EventManager(viewModel: viewModel)
         cursorTracker = CursorTracker(viewModel: viewModel)
+
+        speechManager = SpeechManager()
+        dictationPermissionsGranted = SpeechManager.currentPermissionsGranted()
+
+        speechManager.onResult = { [weak self] text, isFinal in
+            self?.viewModel.handleDictationResult(fullText: text, isFinal: isFinal)
+        }
+        speechManager.onError = { error in
+            print("SpeechManager error: \(error)")
+        }
+
+        dictationCancellable = viewModel.$dictationModeEnabled
+            .dropFirst()
+            .sink { [weak self] enabled in
+                guard let self else { return }
+                if enabled {
+                    if !self.dictationPermissionsGranted {
+                        Task { @MainActor in
+                            let granted = await SpeechManager.requestPermissions()
+                            self.dictationPermissionsGranted = granted
+                            if granted {
+                                self.speechManager.startListening()
+                            } else {
+                                self.viewModel.dictationModeEnabled = false
+                            }
+                            self.statusItem.menu = self.buildMenu()
+                        }
+                    } else {
+                        self.speechManager.startListening()
+                    }
+                } else {
+                    self.speechManager.stopListening()
+                }
+            }
 
         setupMenubar()
         settingsWindowController = SettingsWindowController()
@@ -71,6 +109,10 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let drawingItem = NSMenuItem(title: "Doodle", action: #selector(toggleDrawingAllowed), keyEquivalent: "")
         drawingItem.state = viewModel.drawingAllowed ? .on : .off
         menu.addItem(drawingItem)
+
+        let dictationItem = NSMenuItem(title: "Dictation", action: #selector(toggleDictationFromMenu), keyEquivalent: "")
+        dictationItem.state = viewModel.dictationModeEnabled ? .on : .off
+        menu.addItem(dictationItem)
         menu.addItem(NSMenuItem.separator())
 
         let themeItem = NSMenuItem(title: "Theme", action: nil, keyEquivalent: "")
@@ -148,10 +190,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.items.first(where: { $0.title.hasSuffix("to start typing") })?.title = "\(hotkey) to start typing"
         menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
         menu.items.first(where: { $0.title == "Doodle" })?.state = viewModel.drawingAllowed ? .on : .off
+        menu.items.first(where: { $0.title == "Dictation" })?.state = viewModel.dictationModeEnabled ? .on : .off
 
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
         }
+    }
+
+    @objc private func toggleDictationFromMenu() {
+        viewModel.toggleDictation()
+        statusItem.menu = buildMenu()
     }
 
     @objc private func toggleDrawingAllowed() {
