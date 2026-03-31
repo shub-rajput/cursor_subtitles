@@ -183,6 +183,17 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
+        // Dictation toggle hotkey
+        let (dictationMods, dictationCode) = MainActor.assumeIsolated {
+            Self.parseHotkey(ConfigManager.shared.config.dictationHotkey)
+        }
+        if keyCode == dictationCode && mods == dictationMods {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self.viewModel.toggleDictation() }
+            }
+            return nil
+        }
+
         // Cmd+arrow shortcuts (only when pill is active)
         let cmdArrowActions: [UInt16: @MainActor () -> Void] = [
             125: { ConfigManager.shared.cycleTheme(forward: true) },   // Cmd+Down
