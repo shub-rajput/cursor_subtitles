@@ -32,6 +32,9 @@ class SubtitleViewModel: ObservableObject {
     var currentStroke: [NSPoint] = []
     @Published var isDrawing: Bool = false
 
+    @Published var dictationModeEnabled: Bool = false
+    private var dictationBaseline: String = ""
+
     @Published var animatedChars: [AnimatedChar] = []
     private var nextCharID = 0
     /// Cursor position for arrow key editing (0 = before first char, text.count = end)
@@ -40,11 +43,14 @@ class SubtitleViewModel: ObservableObject {
     var config: ConfigManager { ConfigManager.shared }
 
     var displayText: String {
+        if isListening && text.isEmpty { return "Listening…" }
         if text.isEmpty && !onNewLine { return config.config.style.placeholderText }
         return text
     }
 
     var isPlaceholder: Bool { text.isEmpty && !onNewLine && isActive }
+
+    var isListening: Bool { dictationModeEnabled && isActive }
 
     /// ID of the char at cursor position (for overlay cursor placement), nil when cursor is at end
     var editingCharID: Int? {
@@ -144,6 +150,44 @@ class SubtitleViewModel: ObservableObject {
         }
     }
 
+    func toggleDictation() {
+        dictationModeEnabled.toggle()
+        if dictationModeEnabled {
+            if !isActive { activate() }
+            dictationBaseline = ""
+        } else {
+            dictationBaseline = ""
+        }
+    }
+
+    func handleDictationResult(fullText: String, isFinal: Bool) {
+        guard isActive else { return }
+        if !isVisible { isVisible = true }
+
+        let newText = dictationBaseline + fullText
+        let limit = config.config.behavior.charLimit
+
+        // Auto-advance when char limit hit (single-line mode only)
+        if !config.config.behavior.multiLine && newText.count >= limit {
+            text = String(newText.prefix(limit))
+            rebuildAnimatedChars()
+            handleNewline()       // moves text to previous line, clears current
+            dictationBaseline = ""
+            resetIdleTimer()
+            return
+        }
+
+        text = newText
+        rebuildAnimatedChars()
+
+        // On session final: commit full text as baseline for the next session
+        if isFinal {
+            dictationBaseline = text
+        }
+
+        resetIdleTimer()
+    }
+
     func dismiss() {
         idleTimer?.invalidate()
         drawingToggleActive = false
@@ -164,6 +208,8 @@ class SubtitleViewModel: ObservableObject {
             self.showPreviousLine = false
             self.onNewLine = false
             self.clearStrokes()
+            self.dictationModeEnabled = false
+            self.dictationBaseline = ""
         }
     }
 
@@ -205,7 +251,15 @@ class SubtitleViewModel: ObservableObject {
         }
         onNewLine = false
 
-        if config.config.behavior.multiLine || text.count < config.config.behavior.charLimit {
+        let limit = config.config.behavior.charLimit
+        let multiLine = config.config.behavior.multiLine
+
+        // In single-line mode, auto-advance to a new line when the limit is hit
+        if !multiLine && text.count >= limit {
+            handleNewline()
+        }
+
+        if multiLine || text.count < limit {
             let atEnd = textCursorIndex >= text.count
             let insertIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
             text.insert(contentsOf: char, at: insertIdx)
