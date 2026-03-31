@@ -21,5 +21,9 @@
     <true/>
     <key>NSAccessibilityUsageDescription</key>
     <string>Pubbles needs accessibility access to capture global hotkeys and keyboard input.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Pubbles uses the microphone to transcribe speech into the subtitle bubble.</string>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Pubbles uses speech recognition to display live transcriptions in the subtitle bubble.</string>
 </dict>
 </plist>
