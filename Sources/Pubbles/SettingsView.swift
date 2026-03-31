@@ -43,7 +43,7 @@ struct AccessibilityBannerSection: View {
                         }
                         .buttonStyle(.borderedProminent)
                         Button("Help") {
-                            NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles/issues")!)
+                            NSWorkspace.shared.open(URL(string: "https://www.notion.so/Accessibility-Permission-error-3330f40884e9804aab43d81154577e79")!)
                         }
                     }
                 }
@@ -197,7 +197,7 @@ struct AboutSettingsView: View {
                     .buttonStyle(.bordered)
 
                     Button {
-                        NSWorkspace.shared.open(URL(string: "https://github.com/shub-rajput/pubbles/issues")!)
+                        NSWorkspace.shared.open(URL(string: "https://www.notion.so/Pubbles-Help-Center-3330f40884e980f7a0f0d5689d37e94a")!)
                     } label: {
                         Label("Help", systemImage: "questionmark.circle")
                             .font(.system(size: 12, weight: .medium))
