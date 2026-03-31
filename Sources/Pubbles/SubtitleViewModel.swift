@@ -34,6 +34,8 @@ class SubtitleViewModel: ObservableObject {
 
     @Published var dictationModeEnabled: Bool = false
     private var dictationBaseline: String = ""
+    /// Number of characters already consumed from the current recognition session (for mid-session auto-advance)
+    private var dictationSessionOffset: Int = 0
 
     @Published var animatedChars: [AnimatedChar] = []
     private var nextCharID = 0
@@ -152,37 +154,53 @@ class SubtitleViewModel: ObservableObject {
 
     func toggleDictation() {
         dictationModeEnabled.toggle()
-        if dictationModeEnabled {
-            if !isActive { activate() }
-            dictationBaseline = ""
-        } else {
-            dictationBaseline = ""
-        }
+        if dictationModeEnabled && !isActive { activate() }
+        dictationBaseline = ""
+        dictationSessionOffset = 0
     }
 
     func handleDictationResult(fullText: String, isFinal: Bool) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
 
-        let newText = dictationBaseline + fullText
-        let limit = config.config.behavior.charLimit
+        // Strip chars already consumed by a previous auto-advance within this session
+        let sessionText: String
+        if dictationSessionOffset > 0 && dictationSessionOffset <= fullText.count {
+            sessionText = String(fullText[fullText.index(fullText.startIndex, offsetBy: dictationSessionOffset)...])
+        } else {
+            sessionText = fullText
+        }
+        let behavior = config.config.behavior
+        let newText = dictationBaseline + sessionText
+        let limit = behavior.charLimit
+
+        // If we're on a new line and dictation adds text, fade out the previous line
+        if onNewLine && showPreviousLine && !sessionText.isEmpty {
+            withAnimation(.snappy(duration: 0.2)) {
+                showPreviousLine = false
+            }
+            onNewLine = false
+        }
 
         // Auto-advance when char limit hit (single-line mode only)
-        if !config.config.behavior.multiLine && newText.count >= limit {
+        if !behavior.multiLine && newText.count >= limit {
             text = String(newText.prefix(limit))
             rebuildAnimatedChars()
             handleNewline()       // moves text to previous line, clears current
             dictationBaseline = ""
+            dictationSessionOffset = fullText.count
             resetIdleTimer()
             return
         }
 
         text = newText
+        textCursorIndex = newText.count
         rebuildAnimatedChars()
 
         // On session final: commit full text as baseline for the next session
         if isFinal {
             dictationBaseline = text
+            dictationSessionOffset = 0
         }
 
         resetIdleTimer()
@@ -210,6 +228,7 @@ class SubtitleViewModel: ObservableObject {
             self.clearStrokes()
             self.dictationModeEnabled = false
             self.dictationBaseline = ""
+            self.dictationSessionOffset = 0
         }
     }
 
