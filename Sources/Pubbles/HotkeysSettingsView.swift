@@ -8,6 +8,7 @@ struct HotkeysSettingsView: View {
         case enablePubble
         case drawingMode
         case drawingToggle
+        case dictationToggle
     }
 
     var body: some View {
@@ -84,6 +85,27 @@ struct HotkeysSettingsView: View {
 
                 hotkeyRow("New Line") {
                     KeyCap("Enter")
+                }
+            }
+
+            Section {
+                // Toggle Dictation mode
+                HStack {
+                    Text("Toggle Dictation mode")
+                    Spacer()
+
+                    if recordingRow == .dictationToggle {
+                        HotkeyRecorderInline(
+                            onRecord: { newHotkey in
+                                configManager.setDictationHotkey(newHotkey)
+                                recordingRow = nil
+                            },
+                            onCancel: { recordingRow = nil }
+                        )
+                    } else {
+                        hotkeyKeyCaps(configManager.config.dictationHotkey)
+                        recordButton { recordingRow = .dictationToggle }
+                    }
                 }
             }
 

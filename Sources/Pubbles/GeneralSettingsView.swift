@@ -1,8 +1,11 @@
 import SwiftUI
+import Speech
+import AVFoundation
 
 struct GeneralSettingsView: View {
     @ObservedObject private var configManager = ConfigManager.shared
     @State private var showResetConfirmation = false
+    @State private var dictationPermissionsGranted = SpeechManager.currentPermissionsGranted()
 
     private var behavior: BehaviorConfig { configManager.config.behavior }
 
@@ -37,6 +40,28 @@ struct GeneralSettingsView: View {
                 Picker("Fade Out", selection: fadeOutBinding) {
                     ForEach([0.0, 0.2, 0.5, 0.8, 1.0], id: \.self) { s in
                         Text(s == 0 ? "Instant" : "\(s, specifier: "%.1f")s").tag(s)
+                    }
+                }
+            }
+
+            Section("Dictation") {
+                HStack {
+                    Text("Microphone & Speech Recognition")
+                    Spacer()
+                    if dictationPermissionsGranted {
+                        Label("Granted", systemImage: "checkmark.circle.fill")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                    } else {
+                        Button("Grant Access") {
+                            Task {
+                                let granted = await SpeechManager.requestPermissions()
+                                dictationPermissionsGranted = granted
+                            }
+                        }
+                        .font(.caption)
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     }
                 }
             }
