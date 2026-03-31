@@ -48,6 +48,7 @@ struct AppConfig: Codable, Sendable {
     var hotkey: String = "cmd+/"
     var drawingHotkey: String = "cmd"
     var drawingToggleHotkey: String = "cmd+d"
+    var dictationHotkey: String = "cmd+m"
     var theme: String? = nil
     var style: StyleConfig = StyleConfig()
     var behavior: BehaviorConfig = BehaviorConfig()
@@ -457,6 +458,12 @@ class ConfigManager: ObservableObject {
     func setDrawingToggleHotkey(_ hotkey: String) {
         guard var dict = readConfigDict() else { return }
         dict["drawingToggleHotkey"] = hotkey
+        writeConfigDict(dict)
+    }
+
+    func setDictationHotkey(_ hotkey: String) {
+        guard var dict = readConfigDict() else { return }
+        dict["dictationHotkey"] = hotkey
         writeConfigDict(dict)
     }
 
