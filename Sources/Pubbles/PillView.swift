@@ -243,37 +243,48 @@ private struct CharFlowLayout: Layout {
     }
 
     private func layout(subviews: Subviews, availableWidth: CGFloat) -> (size: CGSize, frames: [CGRect]) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
         var frames: [CGRect] = []
         var x: CGFloat = 0
         var y: CGFloat = 0
         var lineHeight: CGFloat = 0
         var totalWidth: CGFloat = 0
         var atLineStart = true
+        var prevWasSpace = true
 
-        for subview in subviews {
+        for (i, subview) in subviews.enumerated() {
+            let size = sizes[i]
+
             if subview[LineBreakKey.self] {
-                // Force line break — place at zero size (every subview must be placed)
                 frames.append(CGRect(x: x, y: y, width: 0, height: 0))
-                x = 0
-                y += lineHeight + 4
-                lineHeight = 0
-                atLineStart = true
+                x = 0; y += lineHeight + 4; lineHeight = 0; atLineStart = true; prevWasSpace = true
                 continue
             }
 
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > availableWidth && x > 0 {
-                // Auto-wrap: start a new line
-                x = 0
-                y += lineHeight + 4
-                lineHeight = 0
-                atLineStart = true
-            }
+            let isSpace = subview[IsWhitespaceKey.self]
 
             // Skip leading whitespace at the start of any line (prevents indent after wrap)
-            if atLineStart && subview[IsWhitespaceKey.self] {
+            if atLineStart && isSpace {
                 frames.append(CGRect(x: 0, y: y, width: 0, height: 0))
+                prevWasSpace = true
                 continue
+            }
+
+            // Word-wrap: at the start of a word, check if the whole word fits on this line
+            if !isSpace && prevWasSpace && !atLineStart {
+                var wordWidth: CGFloat = 0
+                var j = i
+                while j < subviews.count && !subviews[j][IsWhitespaceKey.self] && !subviews[j][LineBreakKey.self] {
+                    wordWidth += sizes[j].width
+                    j += 1
+                }
+                if x + wordWidth > availableWidth && wordWidth <= availableWidth {
+                    x = 0; y += lineHeight + 4; lineHeight = 0; atLineStart = true
+                }
+            }
+
+            if x + size.width > availableWidth && x > 0 {
+                x = 0; y += lineHeight + 4; lineHeight = 0; atLineStart = true
             }
 
             frames.append(CGRect(x: x, y: y, width: size.width, height: size.height))
@@ -281,6 +292,7 @@ private struct CharFlowLayout: Layout {
             lineHeight = max(lineHeight, size.height)
             totalWidth = max(totalWidth, x)
             atLineStart = false
+            prevWasSpace = isSpace
         }
 
         return (CGSize(width: totalWidth, height: y + lineHeight), frames)
