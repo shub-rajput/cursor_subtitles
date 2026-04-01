@@ -14,6 +14,8 @@ struct HotkeysSettingsView: View {
     var body: some View {
         Form {
             AccessibilityBannerSection()
+
+            // MARK: Editable hotkeys
             Section {
                 // Toggle Pubble mode
                 HStack {
@@ -31,6 +33,9 @@ struct HotkeysSettingsView: View {
                     } else {
                         hotkeyKeyCaps(configManager.config.hotkey)
                         recordButton { recordingRow = .enablePubble }
+                        if !configManager.config.hotkey.isEmpty {
+                            clearButton { configManager.setHotkey("") }
+                        }
                     }
                 }
 
@@ -56,9 +61,59 @@ struct HotkeysSettingsView: View {
                                 .foregroundStyle(.secondary)
                         }
                         recordButton { recordingRow = .drawingMode }
+                        if !configManager.config.drawingHotkey.isEmpty {
+                            clearButton { configManager.setDrawingHotkey("") }
+                        }
                     }
                 }
 
+                // Toggle Babble mode
+                HStack {
+                    Text("Toggle Babble mode")
+                    Spacer()
+
+                    if recordingRow == .dictationToggle {
+                        HotkeyRecorderInline(
+                            onRecord: { newHotkey in
+                                configManager.setDictationHotkey(newHotkey)
+                                recordingRow = nil
+                            },
+                            onCancel: { recordingRow = nil }
+                        )
+                    } else {
+                        hotkeyKeyCaps(configManager.config.dictationHotkey)
+                        recordButton { recordingRow = .dictationToggle }
+                        if !configManager.config.dictationHotkey.isEmpty {
+                            clearButton { configManager.setDictationHotkey("") }
+                        }
+                    }
+                }
+
+                // Toggle Doodle mode
+                HStack {
+                    Text("Toggle Doodle mode")
+                    Spacer()
+
+                    if recordingRow == .drawingToggle {
+                        HotkeyRecorderInline(
+                            onRecord: { newHotkey in
+                                configManager.setDrawingToggleHotkey(newHotkey)
+                                recordingRow = nil
+                            },
+                            onCancel: { recordingRow = nil }
+                        )
+                    } else {
+                        hotkeyKeyCaps(configManager.config.drawingToggleHotkey)
+                        recordButton { recordingRow = .drawingToggle }
+                        if !configManager.config.drawingToggleHotkey.isEmpty {
+                            clearButton { configManager.setDrawingToggleHotkey("") }
+                        }
+                    }
+                }
+            }
+
+            // MARK: Fixed hotkeys
+            Section {
                 hotkeyRow("Change Pubble Scale") {
                     HStack(spacing: 4) {
                         KeyCap("cmd")
@@ -79,61 +134,7 @@ struct HotkeysSettingsView: View {
                     }
                 }
 
-                hotkeyRow("Dismiss Pubble") {
-                    KeyCap("Esc")
-                }
-
-                hotkeyRow("New Line") {
-                    KeyCap("Enter")
-                }
-            }
-
-            Section {
-                // Toggle Dictation mode
-                HStack {
-                    Text("Toggle Dictation mode")
-                    Spacer()
-
-                    if recordingRow == .dictationToggle {
-                        HotkeyRecorderInline(
-                            onRecord: { newHotkey in
-                                configManager.setDictationHotkey(newHotkey)
-                                recordingRow = nil
-                            },
-                            onCancel: { recordingRow = nil }
-                        )
-                    } else {
-                        hotkeyKeyCaps(configManager.config.dictationHotkey)
-                        recordButton { recordingRow = .dictationToggle }
-                    }
-                }
-            }
-
-            Section {
-                // Toggle Doodle mode
-                HStack {
-                    Text("Toggle Doodle mode")
-                    Spacer()
-
-                    if recordingRow == .drawingToggle {
-                        HotkeyRecorderInline(
-                            onRecord: { newHotkey in
-                                configManager.setDrawingToggleHotkey(newHotkey)
-                                recordingRow = nil
-                            },
-                            onCancel: { recordingRow = nil }
-                        )
-                    } else {
-                        hotkeyKeyCaps(configManager.config.drawingToggleHotkey)
-                        recordButton { recordingRow = .drawingToggle }
-                    }
-                }
-
-                hotkeyRow("Show/Hide Pubble while doodling") {
-                    hotkeyKeyCaps(configManager.config.hotkey)
-                }
-
-                hotkeyRow("Exit Doodle mode") {
+                hotkeyRow("Dismiss") {
                     KeyCap("Esc")
                 }
             }
@@ -143,17 +144,10 @@ struct HotkeysSettingsView: View {
     }
 
     private func recordButton(action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Circle()
-                    .fill(Color.red.opacity(0.8))
-                    .frame(width: 6, height: 6)
-                Text("Record")
-            }
-        }
-        .font(.caption)
-        .buttonStyle(.bordered)
-        .controlSize(.small)
+        Button("Edit", action: action)
+            .font(.caption)
+            .buttonStyle(.bordered)
+            .controlSize(.small)
     }
 
     private func hotkeyRow<V: View>(_ label: String, @ViewBuilder shortcut: () -> V) -> some View {
@@ -166,14 +160,29 @@ struct HotkeysSettingsView: View {
 
     @ViewBuilder
     private func hotkeyKeyCaps(_ hotkey: String) -> some View {
-        let parts = hotkey.lowercased().split(separator: "+").map(String.init)
-        let symbols: [String: String] = [
-            "cmd": "\u{2318}", "command": "\u{2318}",
-            "shift": "\u{21E7}", "ctrl": "\u{2303}", "control": "\u{2303}",
-            "alt": "\u{2325}", "option": "\u{2325}", "opt": "\u{2325}",
-        ]
-        let display = parts.map { symbols[$0] ?? $0 }.joined(separator: " + ")
-        KeyCap(display)
+        if hotkey.isEmpty {
+            Text("—")
+                .font(.caption)
+                .foregroundStyle(.tertiary)
+        } else {
+            let parts = hotkey.lowercased().split(separator: "+").map(String.init)
+            let symbols: [String: String] = [
+                "cmd": "\u{2318}", "command": "\u{2318}",
+                "shift": "\u{21E7}", "ctrl": "\u{2303}", "control": "\u{2303}",
+                "alt": "\u{2325}", "option": "\u{2325}", "opt": "\u{2325}",
+            ]
+            let display = parts.map { symbols[$0] ?? $0 }.joined(separator: " + ")
+            KeyCap(display)
+        }
+    }
+
+    private func clearButton(action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: "xmark")
+        }
+        .font(.caption)
+        .buttonStyle(.plain)
+        .controlSize(.small)
     }
 }
 
