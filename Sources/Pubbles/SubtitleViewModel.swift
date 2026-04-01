@@ -154,9 +154,11 @@ class SubtitleViewModel: ObservableObject {
 
     func toggleDictation() {
         dictationModeEnabled.toggle()
-        if dictationModeEnabled && !isActive { activate() }
-        dictationBaseline = ""
-        dictationSessionOffset = 0
+        if dictationModeEnabled {
+            if !isActive { activate() }
+            dictationBaseline = ""
+            dictationSessionOffset = 0
+        }
     }
 
     func handleDictationResult(fullText: String, isFinal: Bool) {
@@ -193,17 +195,19 @@ class SubtitleViewModel: ObservableObject {
             return
         }
 
-        text = newText
-        textCursorIndex = newText.count
-        rebuildAnimatedChars()
+        // Only rebuild animated chars when text actually changed (avoids redundant SwiftUI diffs from partial results)
+        if text != newText {
+            text = newText
+            textCursorIndex = newText.count
+            rebuildAnimatedChars()
+            resetIdleTimer()
+        }
 
         // On session final: commit full text as baseline for the next session
         if isFinal {
             dictationBaseline = text
             dictationSessionOffset = 0
         }
-
-        resetIdleTimer()
     }
 
     func dismiss() {
@@ -211,6 +215,10 @@ class SubtitleViewModel: ObservableObject {
         drawingToggleActive = false
         activatedFromDrawingToggle = false
         if pillHiddenForDrawing { pillHiddenForDrawing = false }
+        // Stop dictation immediately so the audio engine doesn't run during fade
+        dictationModeEnabled = false
+        dictationBaseline = ""
+        dictationSessionOffset = 0
         isActive = false
         isVisible = false
         // Delay content clearing so the fade animation renders with current appearance intact
@@ -226,9 +234,6 @@ class SubtitleViewModel: ObservableObject {
             self.showPreviousLine = false
             self.onNewLine = false
             self.clearStrokes()
-            self.dictationModeEnabled = false
-            self.dictationBaseline = ""
-            self.dictationSessionOffset = 0
         }
     }
 
