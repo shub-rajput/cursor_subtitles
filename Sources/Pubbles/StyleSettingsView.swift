@@ -380,13 +380,6 @@ struct StyleSettingsView: View {
 
     // MARK: - Bindings
 
-    private var bgColorBinding: Binding<Color> {
-        Binding(
-            get: { Color(hex: style.backgroundColor) ?? .blue },
-            set: { configManager.setColor($0.toHex()) }
-        )
-    }
-
     private var bgColorWithOpacityBinding: Binding<Color> {
         Binding(
             get: {
@@ -397,7 +390,7 @@ struct StyleSettingsView: View {
                 let nsColor = NSColor(newColor)
                 let opacity = Double(nsColor.alphaComponent)
                 let opaque = nsColor.withAlphaComponent(1.0)
-                configManager.setColor(Color(opaque).toHex())
+                configManager.setStyleValue("backgroundColor", Color(opaque).toHex())
                 configManager.setStyleValue("backgroundOpacity", opacity)
             }
         )

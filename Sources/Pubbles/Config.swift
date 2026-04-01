@@ -160,16 +160,6 @@ class ConfigManager: ObservableObject {
 
         merged = ConfigManager.deepMerge(merged, userDict)
 
-        // Apply colorPreset only if the user hasn't manually set style.backgroundColor
-        if let preset = userDict["colorPreset"] as? String {
-            let userHasManualBgColor = (userDict["style"] as? [String: Any])?["backgroundColor"] != nil
-            if !userHasManualBgColor {
-                var styleDict = merged["style"] as? [String: Any] ?? [:]
-                styleDict["backgroundColor"] = preset
-                merged["style"] = styleDict
-            }
-        }
-
         do {
             let mergedData = try JSONSerialization.data(withJSONObject: merged)
             config = try JSONDecoder().decode(AppConfig.self, from: mergedData)
@@ -277,7 +267,6 @@ class ConfigManager: ObservableObject {
     func resetStyleOverrides() {
         guard var dict = readConfigDict() else { return }
         dict.removeValue(forKey: "style")
-        dict.removeValue(forKey: "colorPreset")
         writeConfigDict(dict)
     }
 
@@ -429,17 +418,6 @@ class ConfigManager: ObservableObject {
         var styleDict = dict["style"] as? [String: Any] ?? [:]
         styleDict["pillScale"] = next
         dict["style"] = styleDict
-        writeConfigDict(dict)
-    }
-
-    func setColor(_ hex: String) {
-        guard var dict = readConfigDict() else { return }
-        dict["colorPreset"] = hex
-        // Clear manual backgroundColor so colorPreset takes effect
-        if var styleDict = dict["style"] as? [String: Any] {
-            styleDict.removeValue(forKey: "backgroundColor")
-            dict["style"] = styleDict
-        }
         writeConfigDict(dict)
     }
 

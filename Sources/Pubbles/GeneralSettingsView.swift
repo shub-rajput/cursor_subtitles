@@ -44,7 +44,7 @@ struct GeneralSettingsView: View {
                 }
             }
 
-            Section("Dictation") {
+            Section {
                 HStack {
                     Text("Microphone & Speech Recognition")
                     Spacer()
