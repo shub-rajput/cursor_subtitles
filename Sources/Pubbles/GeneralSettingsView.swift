@@ -52,6 +52,15 @@ struct GeneralSettingsView: View {
                         Label("Granted", systemImage: "checkmark.circle.fill")
                             .foregroundStyle(.green)
                             .font(.caption)
+                    } else if SpeechManager.permissionsPreviouslyDenied() {
+                        Button("Open Settings") {
+                            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone") {
+                                NSWorkspace.shared.open(url)
+                            }
+                        }
+                        .font(.caption)
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
                     } else {
                         Button("Grant Access") {
                             Task {

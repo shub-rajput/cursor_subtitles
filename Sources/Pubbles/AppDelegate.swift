@@ -12,7 +12,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var settingsWindowController: SettingsWindowController!
     private var speechManager: SpeechManager!
     private var dictationCancellable: AnyCancellable?
-    private var dictationPermissionsGranted = false
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         overlayController = OverlayController(viewModel: viewModel)
@@ -20,7 +19,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         cursorTracker = CursorTracker(viewModel: viewModel)
 
         speechManager = SpeechManager()
-        dictationPermissionsGranted = SpeechManager.currentPermissionsGranted()
 
         speechManager.onResult = { [weak self] text, isFinal in
             self?.viewModel.handleDictationResult(fullText: text, isFinal: isFinal)
@@ -34,10 +32,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             .sink { [weak self] enabled in
                 guard let self else { return }
                 if enabled {
-                    if !self.dictationPermissionsGranted {
+                    if !SpeechManager.currentPermissionsGranted() {
                         Task { @MainActor in
                             let granted = await SpeechManager.requestPermissions()
-                            self.dictationPermissionsGranted = granted
                             if granted {
                                 self.speechManager.startListening()
                             } else {
