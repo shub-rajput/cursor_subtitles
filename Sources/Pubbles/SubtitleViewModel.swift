@@ -36,6 +36,8 @@ class SubtitleViewModel: ObservableObject {
     private var dictationBaseline: String = ""
     /// Number of characters already consumed from the current recognition session (for mid-session auto-advance)
     private var dictationSessionOffset: Int = 0
+    /// Length of the last fullText received from speech recognition (used to sync baseline after keyboard edits)
+    private var lastDictationFullTextLength: Int = 0
 
     @Published var animatedChars: [AnimatedChar] = []
     private var nextCharID = 0
@@ -158,12 +160,15 @@ class SubtitleViewModel: ObservableObject {
             if !isActive { activate() }
             dictationBaseline = ""
             dictationSessionOffset = 0
+            lastDictationFullTextLength = 0
         }
     }
 
     func handleDictationResult(fullText: String, isFinal: Bool) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
+
+        lastDictationFullTextLength = fullText.count
 
         // Strip chars already consumed by a previous auto-advance within this session
         let sessionText: String
@@ -219,6 +224,7 @@ class SubtitleViewModel: ObservableObject {
         dictationModeEnabled = false
         dictationBaseline = ""
         dictationSessionOffset = 0
+        lastDictationFullTextLength = 0
         isActive = false
         isVisible = false
         // Delay content clearing so the fade animation renders with current appearance intact
@@ -302,6 +308,7 @@ class SubtitleViewModel: ObservableObject {
                 rebuildAnimatedChars()
             }
         }
+        syncDictationBaselineIfNeeded()
         resetIdleTimer()
     }
 
@@ -330,6 +337,7 @@ class SubtitleViewModel: ObservableObject {
                 textCursorIndex = 0
             }
         }
+        syncDictationBaselineIfNeeded()
         resetIdleTimer()
     }
 
@@ -352,6 +360,7 @@ class SubtitleViewModel: ObservableObject {
             // Mid-text delete — rebuild chars instantly
             rebuildAnimatedChars()
         }
+        syncDictationBaselineIfNeeded()
         resetIdleTimer()
     }
 
@@ -365,6 +374,14 @@ class SubtitleViewModel: ObservableObject {
         guard isActive, textCursorIndex < text.count else { return }
         textCursorIndex += 1
         resetIdleTimer()
+    }
+
+    /// When the user edits text via keyboard during dictation, sync the baseline
+    /// so the next speech result appends to the edited text instead of overwriting it.
+    private func syncDictationBaselineIfNeeded() {
+        guard dictationModeEnabled else { return }
+        dictationBaseline = text
+        dictationSessionOffset = lastDictationFullTextLength
     }
 
     /// Rebuilds animatedChars from text without animation (for mid-text edits)
