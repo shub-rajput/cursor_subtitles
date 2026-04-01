@@ -193,10 +193,16 @@ class SubtitleViewModel: ObservableObject {
         if !behavior.multiLine && newText.count >= limit {
             text = String(newText.prefix(limit))
             rebuildAnimatedChars()
-            handleNewline()       // moves text to previous line, clears current
-            dictationBaseline = ""
+            var overflow = handleNewline()
+            // Include any chars beyond the limit in the overflow
+            if newText.count > limit {
+                overflow += String(newText.dropFirst(limit))
+                text = overflow
+                textCursorIndex = overflow.count
+                rebuildAnimatedChars()
+            }
+            dictationBaseline = overflow
             dictationSessionOffset = fullText.count
-            resetIdleTimer()
             return
         }
 
@@ -312,33 +318,56 @@ class SubtitleViewModel: ObservableObject {
         resetIdleTimer()
     }
 
-    func handleNewline() {
-        guard isActive else { return }
+    /// Advance to a new line. In single-line mode, word-wraps: the last
+    /// partial word carries over to the new line. Returns the overflow text
+    /// (empty when there was no partial word or in multi-line mode).
+    @discardableResult
+    func handleNewline() -> String {
+        guard isActive else { return "" }
         if !isVisible { isVisible = true }
 
         if config.config.behavior.multiLine {
-            // Insert "\n" at cursor position (same pattern as mid-text char insert)
             let insertIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
             text.insert("\n", at: insertIdx)
             textCursorIndex += 1
             rebuildAnimatedChars()
-        } else {
-            // Move current text to previous line, show it above
-            if !text.isEmpty {
-                withAnimation(.snappy(duration: 0.2)) {
-                    previousLine = text
-                    previousLineChars = animatedChars
-                    showPreviousLine = true
-                    onNewLine = true
-                }
-                // Outside withAnimation so chars vanish instantly (no exit transition)
-                text = ""
-                animatedChars = []
-                textCursorIndex = 0
+            syncDictationBaselineIfNeeded()
+            resetIdleTimer()
+            return ""
+        }
+
+        // Word-wrap: split at last space so we don't cut mid-word
+        var overflow = ""
+        if let lastSpace = text.lastIndex(of: " ") {
+            overflow = String(text[text.index(after: lastSpace)...])
+            text = String(text[text.startIndex..<lastSpace])
+            rebuildAnimatedChars()
+        }
+
+        // Move current text to previous line
+        if !text.isEmpty {
+            withAnimation(.snappy(duration: 0.2)) {
+                previousLine = text
+                previousLineChars = animatedChars
+                showPreviousLine = true
+                onNewLine = true
             }
         }
+
+        // Start new line with overflow word
+        if !overflow.isEmpty {
+            text = overflow
+            textCursorIndex = overflow.count
+            rebuildAnimatedChars()
+        } else {
+            text = ""
+            animatedChars = []
+            textCursorIndex = 0
+        }
+
         syncDictationBaselineIfNeeded()
         resetIdleTimer()
+        return overflow
     }
 
     func handleBackspace() {

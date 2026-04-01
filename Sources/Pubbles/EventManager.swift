@@ -256,7 +256,7 @@ final class EventManager {
         // Enter
         if keyCode == 36 {
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { self.viewModel.handleNewline() }
+                MainActor.assumeIsolated { _ = self.viewModel.handleNewline() }
             }
             return nil
         }
