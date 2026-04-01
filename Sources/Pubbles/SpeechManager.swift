@@ -56,26 +56,14 @@ class SpeechManager: @unchecked Sendable {
 
                 if let (text, isFinal) = transcription {
                     self.onResult?(text, isFinal)
-                    if isFinal, self.isListening {
-                        self.tearDownSession()
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                            guard let self, self.isListening else { return }
-                            self.startSession()
-                        }
-                    }
+                    if isFinal { self.restartSessionIfListening() }
                 }
 
                 if let nsError {
                     // kAFAssistantErrorDomain 1110 = "No speech detected" — not a real error
                     let isSilence = nsError.domain == "kAFAssistantErrorDomain" && nsError.code == 1110
                     if isSilence {
-                        if self.isListening {
-                            self.tearDownSession()
-                            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
-                                guard let self, self.isListening else { return }
-                                self.startSession()
-                            }
-                        }
+                        self.restartSessionIfListening()
                     } else {
                         self.onError?(nsError)
                     }
@@ -103,6 +91,15 @@ class SpeechManager: @unchecked Sendable {
         }
     }
 
+    private func restartSessionIfListening() {
+        guard isListening else { return }
+        tearDownSession()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { [weak self] in
+            guard let self, self.isListening else { return }
+            self.startSession()
+        }
+    }
+
     private func tearDownSession() {
         recognitionRequest?.endAudio()
         recognitionRequest = nil
@@ -120,6 +117,13 @@ class SpeechManager: @unchecked Sendable {
         let speech = SFSpeechRecognizer.authorizationStatus() == .authorized
         let mic = AVCaptureDevice.authorizationStatus(for: .audio) == .authorized
         return speech && mic
+    }
+
+    /// True when either permission was previously denied (system won't re-prompt).
+    static func permissionsPreviouslyDenied() -> Bool {
+        let speech = SFSpeechRecognizer.authorizationStatus()
+        let mic = AVCaptureDevice.authorizationStatus(for: .audio)
+        return speech == .denied || speech == .restricted || mic == .denied || mic == .restricted
     }
 
     /// Requests mic + speech recognition permissions. Returns true only if both are granted.
