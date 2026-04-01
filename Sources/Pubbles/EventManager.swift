@@ -310,7 +310,7 @@ final class EventManager {
 
     // MARK: - Hotkey parsing
 
-    private static let keyCodeMap: [String: UInt16] = [
+    static let keyCodeMap: [String: UInt16] = [
         "/": 44, ".": 47, ",": 43, ";": 41, "'": 39, "[": 33, "]": 30,
         "\\": 42, "-": 27, "=": 24, "`": 50,
         "a": 0, "b": 11, "c": 8, "d": 2, "e": 14, "f": 3, "g": 5,
