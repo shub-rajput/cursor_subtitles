@@ -99,17 +99,17 @@ final class EventManager {
 
         // Track modifier key state for hold-to-draw
         if type == .flagsChanged {
-            let (drawingMods, _) = MainActor.assumeIsolated {
-                Self.parseHotkey(ConfigManager.shared.config.drawingHotkey)
+            let (drawingHotkey, drawingMods) = MainActor.assumeIsolated {
+                let h = ConfigManager.shared.config.drawingHotkey
+                return (h, Self.parseHotkey(h).0)
             }
-            let modifierHeld = event.flags.contains(drawingMods.cgEventFlags)
+            let modifierHeld = !drawingHotkey.isEmpty && event.flags.contains(drawingMods.cgEventFlags)
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     // Don't override drawing mode while toggle is active
                     guard !self.viewModel.drawingToggleActive else { return }
-                    let newValue = modifierHeld && self.viewModel.drawingAllowed
-                    if self.viewModel.drawingModeEnabled != newValue {
-                        self.viewModel.drawingModeEnabled = newValue
+                    if self.viewModel.drawingModeEnabled != modifierHeld {
+                        self.viewModel.drawingModeEnabled = modifierHeld
                     }
                 }
             }
@@ -146,10 +146,12 @@ final class EventManager {
         let characters = nsEvent.characters
 
         // Configurable hotkey
-        let (hotkeyMods, hotkeyCode) = MainActor.assumeIsolated {
-            Self.parseHotkey(ConfigManager.shared.config.hotkey)
+        let (hotkeyStr, hotkeyMods, hotkeyCode) = MainActor.assumeIsolated {
+            let h = ConfigManager.shared.config.hotkey
+            let (m, c) = Self.parseHotkey(h)
+            return (h, m, c)
         }
-        if keyCode == hotkeyCode && mods == hotkeyMods {
+        if !hotkeyStr.isEmpty && keyCode == hotkeyCode && mods == hotkeyMods {
             DispatchQueue.main.async {
                 MainActor.assumeIsolated {
                     if self.viewModel.drawingToggleActive {
@@ -169,25 +171,25 @@ final class EventManager {
         }
 
         // Drawing toggle hotkey
-        let (drawToggleMods, drawToggleCode) = MainActor.assumeIsolated {
-            Self.parseHotkey(ConfigManager.shared.config.drawingToggleHotkey)
+        let (drawToggleStr, drawToggleMods, drawToggleCode) = MainActor.assumeIsolated {
+            let h = ConfigManager.shared.config.drawingToggleHotkey
+            let (m, c) = Self.parseHotkey(h)
+            return (h, m, c)
         }
-        if keyCode == drawToggleCode && mods == drawToggleMods {
-            let drawingAllowed = MainActor.assumeIsolated { self.viewModel.drawingAllowed }
-            if drawingAllowed {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { self.viewModel.toggleDrawing() }
-                }
-                return nil
+        if !drawToggleStr.isEmpty && keyCode == drawToggleCode && mods == drawToggleMods {
+            DispatchQueue.main.async {
+                MainActor.assumeIsolated { self.viewModel.toggleDrawing() }
             }
-            return Unmanaged.passUnretained(event)
+            return nil
         }
 
         // Dictation toggle hotkey
-        let (dictationMods, dictationCode) = MainActor.assumeIsolated {
-            Self.parseHotkey(ConfigManager.shared.config.dictationHotkey)
+        let (dictationStr, dictationMods, dictationCode) = MainActor.assumeIsolated {
+            let h = ConfigManager.shared.config.dictationHotkey
+            let (m, c) = Self.parseHotkey(h)
+            return (h, m, c)
         }
-        if keyCode == dictationCode && mods == dictationMods {
+        if !dictationStr.isEmpty && keyCode == dictationCode && mods == dictationMods {
             DispatchQueue.main.async {
                 MainActor.assumeIsolated { self.viewModel.toggleDictation() }
             }

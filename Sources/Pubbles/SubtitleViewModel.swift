@@ -22,7 +22,6 @@ class SubtitleViewModel: ObservableObject {
     /// Whether cursor is on a new blank line (Enter pressed, haven't typed yet)
     @Published var onNewLine: Bool = false
 
-    @Published var drawingAllowed: Bool = true
     @Published var drawingModeEnabled: Bool = false
     @Published var pillHiddenForDrawing: Bool = false
     var drawingToggleActive: Bool = false
@@ -122,7 +121,6 @@ class SubtitleViewModel: ObservableObject {
     }
 
     func toggleDrawing() {
-        guard drawingAllowed else { return }
         drawingToggleActive.toggle()
         if drawingToggleActive {
             if !isActive {
