@@ -8,7 +8,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var overlayController: OverlayController!
     private var eventManager: EventManager!
     private var cursorTracker: CursorTracker!
-    private var isEnabled = true
     private var settingsWindowController: SettingsWindowController!
     private var speechManager: SpeechManager!
     private var dictationCancellable: AnyCancellable?
@@ -40,7 +39,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                             } else {
                                 self.viewModel.dictationModeEnabled = false
                             }
-                            self.statusItem.menu = self.buildMenu()
                         }
                     } else {
                         self.speechManager.startListening()
@@ -67,9 +65,6 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             }
         }
 
-        UpdateChecker.shared.onUpdateStatusChanged = { [weak self] in
-            self?.statusItem.menu = self?.buildMenu()
-        }
         UpdateChecker.shared.checkForUpdates()
     }
 
@@ -93,31 +88,14 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let menu = NSMenu()
         menu.delegate = self
 
-        let hotkey = ConfigManager.shared.config.hotkey
-        let hint = NSMenuItem(title: "\(hotkey) to start typing", action: nil, keyEquivalent: "")
-        hint.isEnabled = false
-        menu.addItem(hint)
-        menu.addItem(NSMenuItem.separator())
-
-        let toggleItem = NSMenuItem(title: "Enabled", action: #selector(toggleEnabled), keyEquivalent: "")
-        toggleItem.state = isEnabled ? .on : .off
-        menu.addItem(toggleItem)
-
-        let drawingItem = NSMenuItem(title: "Doodle", action: #selector(toggleDrawingAllowed), keyEquivalent: "")
-        drawingItem.state = viewModel.drawingAllowed ? .on : .off
-        menu.addItem(drawingItem)
-
-        let dictationItem = NSMenuItem(title: "Dictation", action: #selector(toggleDictationFromMenu), keyEquivalent: "")
-        dictationItem.state = viewModel.dictationModeEnabled ? .on : .off
-        menu.addItem(dictationItem)
-        menu.addItem(NSMenuItem.separator())
-
         let themeItem = NSMenuItem(title: "Theme", action: nil, keyEquivalent: "")
         themeItem.submenu = buildThemeMenu()
         menu.addItem(themeItem)
 
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Hotkeys", action: #selector(openHotkeys), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Configure", action: #selector(openSettings), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "About", action: #selector(openAbout), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Quit", action: #selector(quitApp), keyEquivalent: "q"))
         return menu
@@ -127,13 +105,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         let submenu = NSMenu()
         let currentTheme = ConfigManager.shared.config.theme
 
-        let defaultItem = NSMenuItem(title: "Default", action: nil, keyEquivalent: "")
+        let defaultItem = NSMenuItem(title: "Default", action: #selector(selectDefaultTheme), keyEquivalent: "")
         defaultItem.state = currentTheme == nil ? .on : .off
-        defaultItem.submenu = buildColorMenu()
         submenu.addItem(defaultItem)
         submenu.addItem(NSMenuItem.separator())
 
-        let themes = ConfigManager.shared.availableThemes()
+        let themes = ConfigManager.shared.availableThemes().filter { $0.filename != "default" }
         for theme in themes {
             let item = NSMenuItem(title: theme.name, action: #selector(selectTheme(_:)), keyEquivalent: "")
             item.representedObject = theme.filename
@@ -147,26 +124,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         return submenu
     }
 
-    private func buildColorMenu() -> NSMenu {
-        let submenu = NSMenu()
-        let colors: [(String, String)] = [
-            ("Blue", "#256CEF"),
-            ("Red", "#991B1B"),
-            ("Green", "#16A34A"),
-            ("Yellow", "#E6AE00"),
-            ("Pink", "#DB2777"),
-            ("Purple", "#7C3AED"),
-            ("Orange", "#D97706"),
-            ("Slate", "#0F172A"),
-        ]
-        let currentColor = ConfigManager.shared.config.style.backgroundColor.uppercased()
-        for (name, hex) in colors {
-            let item = NSMenuItem(title: name, action: #selector(selectColor(_:)), keyEquivalent: "")
-            item.representedObject = hex
-            item.state = currentColor == hex.uppercased() ? .on : .off
-            submenu.addItem(item)
-        }
-        return submenu
+    @objc private func selectDefaultTheme() {
+        ConfigManager.shared.setTheme(nil)
+        statusItem.menu = buildMenu()
     }
 
     @objc private func selectTheme(_ sender: NSMenuItem) {
@@ -175,49 +135,9 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         statusItem.menu = buildMenu()
     }
 
-    @objc private func selectColor(_ sender: NSMenuItem) {
-        guard let hex = sender.representedObject as? String else { return }
-        ConfigManager.shared.setTheme(nil)
-        ConfigManager.shared.setColor(hex)
-        statusItem.menu = buildMenu()
-    }
-
     func menuWillOpen(_ menu: NSMenu) {
-        let hotkey = ConfigManager.shared.config.hotkey
-        menu.items.first(where: { $0.title.hasSuffix("to start typing") })?.title = "\(hotkey) to start typing"
-        menu.items.first(where: { $0.title == "Enabled" })?.state = isEnabled ? .on : .off
-        menu.items.first(where: { $0.title == "Doodle" })?.state = viewModel.drawingAllowed ? .on : .off
-        menu.items.first(where: { $0.title == "Dictation" })?.state = viewModel.dictationModeEnabled ? .on : .off
-
         if let themeItem = menu.items.first(where: { $0.title == "Theme" }) {
             themeItem.submenu = buildThemeMenu()
-        }
-    }
-
-    @objc private func toggleDictationFromMenu() {
-        viewModel.toggleDictation()
-        statusItem.menu = buildMenu()
-    }
-
-    @objc private func toggleDrawingAllowed() {
-        viewModel.drawingAllowed.toggle()
-        if !viewModel.drawingAllowed {
-            viewModel.drawingModeEnabled = false
-            viewModel.drawingToggleActive = false
-        }
-    }
-
-    @objc private func toggleEnabled() {
-        isEnabled.toggle()
-        if isEnabled {
-            eventManager.start()
-            overlayController.show()
-            statusItem.menu?.item(at: 0)?.state = .on
-        } else {
-            viewModel.dismiss()
-            eventManager.stop()
-            overlayController.hide()
-            statusItem.menu?.item(at: 0)?.state = .off
         }
     }
 
@@ -227,16 +147,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         NSWorkspace.shared.open(themesURL)
     }
 
-    @objc private func checkForUpdates() {
-        if UpdateChecker.shared.updateAvailable {
-            UpdateChecker.shared.promptAndUpdate()
-        } else {
-            UpdateChecker.shared.checkForUpdates(silent: false)
-        }
-    }
-
     @objc private func openSettings() {
         settingsWindowController.showWindow()
+    }
+
+    @objc private func openHotkeys() {
+        settingsWindowController.showWindow(tab: .hotkeys)
+    }
+
+    @objc private func openAbout() {
+        settingsWindowController.showWindow(tab: .about)
     }
 
     func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {

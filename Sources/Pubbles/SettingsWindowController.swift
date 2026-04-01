@@ -21,7 +21,8 @@ class SettingsWindowController: NSWindowController, NSWindowDelegate {
         window.delegate = self
     }
 
-    func showWindow() {
+    func showWindow(tab: SettingsTab? = nil) {
+        if let tab { SettingsNavigation.shared.selectedTab = tab }
         NSApp.setActivationPolicy(.regular)
         window?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)

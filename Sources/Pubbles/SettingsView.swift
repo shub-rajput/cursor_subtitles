@@ -79,8 +79,14 @@ enum SettingsTab: String, CaseIterable, Identifiable {
     }
 }
 
+@MainActor
+class SettingsNavigation: ObservableObject {
+    static let shared = SettingsNavigation()
+    @Published var selectedTab: SettingsTab = .style
+}
+
 struct SettingsView: View {
-    @State private var selectedTab: SettingsTab = .style
+    @ObservedObject private var nav = SettingsNavigation.shared
 
     var body: some View {
         NavigationSplitView {
@@ -92,7 +98,7 @@ struct SettingsView: View {
     }
 
     private var sidebar: some View {
-        List(SettingsTab.allCases, selection: $selectedTab) { tab in
+        List(SettingsTab.allCases, selection: $nav.selectedTab) { tab in
             Label {
                 Text(tab.rawValue)
             } icon: {
@@ -134,7 +140,7 @@ struct SettingsView: View {
 
     @ViewBuilder
     private var detailView: some View {
-        switch selectedTab {
+        switch nav.selectedTab {
         case .style:
             StyleSettingsView()
         case .hotkeys:
