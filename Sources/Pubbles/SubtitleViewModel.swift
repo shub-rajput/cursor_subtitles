@@ -190,18 +190,20 @@ class SubtitleViewModel: ObservableObject {
         }
 
         // Auto-advance when char limit hit (single-line mode only)
+        // Loop so large speech chunks don't overflow the current line
         if !behavior.multiLine && newText.count >= limit {
-            text = String(newText.prefix(limit))
-            rebuildAnimatedChars()
-            var overflow = handleNewline()
-            // Include any chars beyond the limit in the overflow
-            if newText.count > limit {
-                overflow += String(newText.dropFirst(limit))
-                text = overflow
-                textCursorIndex = overflow.count
+            var remaining = newText
+            while remaining.count >= limit {
+                text = String(remaining.prefix(limit))
                 rebuildAnimatedChars()
+                let overflow = handleNewline()
+                let beyondLimit = remaining.count > limit ? String(remaining.dropFirst(limit)) : ""
+                remaining = overflow + beyondLimit
             }
-            dictationBaseline = overflow
+            text = remaining
+            textCursorIndex = remaining.count
+            rebuildAnimatedChars()
+            dictationBaseline = remaining
             dictationSessionOffset = fullText.count
             return
         }
