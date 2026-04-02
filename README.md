@@ -91,7 +91,7 @@ While the pill is active:
 | Shortcut | Action |
 |----------|--------|
 | **Cmd+/** (editable) | Toggle pill on/off |
-| **Cmd+B** (editable) | Toggle babble mode (speech-to-text) |
+| **Cmd+M** (editable) | Toggle babble mode (speech-to-text) |
 | **Cmd+D** (editable) | Toggle doodle mode on/off |
 | **Cmd+Up** | Previous theme |
 | **Cmd+Down** | Next theme |
@@ -202,7 +202,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `hotkey` — trigger shortcut (default: `cmd+/`)
 - `drawingHotkey` — modifier key for hold-to-draw (default: `cmd`)
 - `drawingToggleHotkey` — dedicated doodle mode toggle (default: `cmd+d`)
-- `dictationHotkey` — babble mode toggle (default: `cmd+b`)
+- `dictationHotkey` — babble mode toggle (default: `cmd+m`)
 - `theme` — theme name matching a file in `~/.config/pubbles/themes/` (default: none)
 
 **Style** (`style.*`):
