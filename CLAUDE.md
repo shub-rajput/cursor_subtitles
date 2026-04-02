@@ -33,25 +33,27 @@ The app runs as a menubar-only accessory (`LSUIElement = true`, no dock icon). E
 Core data flow:
 
 ```
-EventManager (CGEvent tap: hotkey Cmd+/, Cmd+D, keyboard input, mouse draw events)
+EventManager (CGEvent tap: hotkey Cmd+/, Cmd+B, Cmd+D, keyboard input, mouse draw events)
     ↓
-SubtitleViewModel (text state, drawing strokes, idle timeout, visibility)
-    ↓
-PillContainerView → PillView + DrawingCanvasView (SwiftUI pill + strokes at cursor position)
+SubtitleViewModel (text state, drawing strokes, dictation state, idle timeout, visibility)
+    ↓                                    ↑
+PillContainerView → PillView + DrawingCanvasView    SpeechManager (SFSpeechRecognizer + AVAudioEngine)
     ↑
 CursorTracker (60 FPS mouse position via timer)
 ```
 
 **Key components:**
 
-- **AppDelegate** — Orchestrates all components: menubar setup, creates EventManager/CursorTracker/OverlayController, wires them to the shared SubtitleViewModel
+- **AppDelegate** — Orchestrates all components: menubar setup, creates EventManager/CursorTracker/OverlayController/SpeechManager, wires them to the shared SubtitleViewModel. Observes `dictationModeEnabled` via Combine to start/stop SpeechManager with permission handling
 - **EventManager** — CGEvent tap for global hotkey capture, keyboard input routing, and mouse event capture for drawing mode. Requires Accessibility permission
-- **SubtitleViewModel** — Central state: current text, previous line, visibility, idle timer, drawing strokes. ObservableObject driving SwiftUI
+- **SpeechManager** — Streaming speech recognition via SFSpeechRecognizer + AVAudioEngine. Intentionally non-`@MainActor` to avoid audio-thread isolation crashes. Restarts sessions on silence/final results. Static helpers for permission checks and prompts
+- **SubtitleViewModel** — Central state: current text, previous line, visibility, idle timer, drawing strokes, dictation mode. ObservableObject driving SwiftUI. Dictation state tracks a baseline + session offset so keyboard edits and speech don't overwrite each other
 - **OverlayController** — Manages the overlay window lifecycle, hosts SwiftUI via NSHostingView
 - **OverlayWindow** — Transparent, click-through NSPanel (`.nonactivatingPanel`, `ignoresMouseEvents = true`) spanning the full screen
 - **PillView / PillContainerView** — SwiftUI rendering: pill shape, text, blinking cursor, positioned at mouse coordinates with fade animations. PillContainerView also hosts `DrawingCanvasView` (SwiftUI Canvas for stroke rendering)
 - **ConfigManager** — Singleton managing config with deep-merge resolution (defaults → theme → user overrides), DispatchSource file watching for live reload, theme file seeding from bundle, and menubar helpers (`setTheme`, `setColor`, `availableThemes`)
 - **CursorTracker** — Timer-based mouse position polling, updates the view model
+- **PermissionMonitor** — Generic `ObservableObject` that polls a permission check on a 1s timer, self-invalidates once granted. Shared instances for Accessibility and Microphone/Speech
 - **SettingsWindowController** — NSWindowController hosting `SettingsView` (SwiftUI). Switches activation policy to `.regular` on open and back to `.accessory` on close so the settings window can receive focus without making the app appear in the Dock permanently
 - **UpdateChecker** — Singleton that checks GitHub releases API for newer versions, prompts the user, and self-updates by downloading and running the install script via a detached `launchctl` job before quitting. Skipped versions are persisted in `UserDefaults`
 
@@ -82,6 +84,9 @@ User config at `~/.config/pubbles/config.json` with live reload via file watcher
 ```
 AppConfig
 ├── hotkey: String
+├── dictationHotkey: String (default: cmd+b)
+├── drawingHotkey: String (modifier for hold-to-draw)
+├── drawingToggleHotkey: String (default: cmd+d)
 ├── theme: String? (matches filename in themes dir)
 ├── style: StyleConfig (backgroundColor, backgroundOpacity, vibrancy, backgroundGradient, glassEffect, textColor, fontSize, cornerRadius, maxWidth, cursorOffset, border*, shadow*, drawingLineColor, drawingLineWidth, ...)
 └── behavior: BehaviorConfig (idleTimeout, fadeOutDuration, fadeInDuration, maxLines, charLimit)

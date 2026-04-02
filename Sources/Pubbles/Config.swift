@@ -48,7 +48,7 @@ struct AppConfig: Codable, Sendable {
     var hotkey: String = "cmd+/"
     var drawingHotkey: String = "cmd"
     var drawingToggleHotkey: String = "cmd+d"
-    var dictationHotkey: String = "cmd+m"
+    var dictationHotkey: String = "cmd+b"
     var theme: String? = nil
     var style: StyleConfig = StyleConfig()
     var behavior: BehaviorConfig = BehaviorConfig()

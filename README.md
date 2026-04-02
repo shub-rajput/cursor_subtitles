@@ -56,6 +56,16 @@ open Pubbles.app
 4. Press **Escape** or click anywhere to dismiss
 5. The pill follows your pointer and fades after 10s of inactivity
 
+### Babble Mode
+
+Press **Cmd+B** (editable) to toggle babble mode — real-time speech-to-text that transcribes your voice into the pill using on-device speech recognition.
+
+- Works alongside typing — edit with the keyboard mid-dictation and speech picks up where you left off
+- In single-line mode, text auto-advances to a new line when the character limit is hit (with word-wrap so words don't split)
+- The pill shows "Listening…" while waiting for speech
+- Requires **Microphone** and **Speech Recognition** permissions (prompted on first use, or grant via Settings)
+- If permissions were previously denied, the pill shows a message directing you to System Settings
+
 ### Doodle Mode
 
 Press **Cmd+D** (editable) to toggle doodle mode — no need for the pill to be active first. When enabled:
@@ -81,6 +91,7 @@ While the pill is active:
 | Shortcut | Action |
 |----------|--------|
 | **Cmd+/** (editable) | Toggle pill on/off |
+| **Cmd+B** (editable) | Toggle babble mode (speech-to-text) |
 | **Cmd+D** (editable) | Toggle doodle mode on/off |
 | **Cmd+Up** | Previous theme |
 | **Cmd+Down** | Next theme |
@@ -191,6 +202,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `hotkey` — trigger shortcut (default: `cmd+/`)
 - `drawingHotkey` — modifier key for hold-to-draw (default: `cmd`)
 - `drawingToggleHotkey` — dedicated doodle mode toggle (default: `cmd+d`)
+- `dictationHotkey` — babble mode toggle (default: `cmd+b`)
 - `theme` — theme name matching a file in `~/.config/pubbles/themes/` (default: none)
 
 **Style** (`style.*`):
@@ -234,7 +246,8 @@ Changes apply instantly — no restart needed.
 
 ## Permissions
 
-Requires **Accessibility** permission for global hotkey capture. The app will prompt on first launch.
+- **Accessibility** — required for global hotkey capture. Prompted on first launch.
+- **Microphone** and **Speech Recognition** — required for babble mode. Prompted on first use of babble mode, or grant ahead of time via Settings.
 
 ## License
 
