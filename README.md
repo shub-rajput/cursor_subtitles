@@ -251,4 +251,4 @@ Changes apply instantly — no restart needed.
 
 ## License
 
-MIT
+GPLv3 — see [LICENSE](LICENSE) for details.
