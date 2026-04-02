@@ -153,6 +153,10 @@ class SubtitleViewModel: ObservableObject {
     }
 
     func toggleDictation() {
+        if !dictationModeEnabled && SpeechManager.permissionsPreviouslyDenied() {
+            showTemporaryPill(text: "Enable \(SpeechManager.deniedPermissionLabel()) Permission", timeout: 4)
+            return
+        }
         dictationModeEnabled.toggle()
         if dictationModeEnabled {
             if !isActive { activate() }
@@ -236,7 +240,7 @@ class SubtitleViewModel: ObservableObject {
         // Delay content clearing so the fade animation renders with current appearance intact
         let fadeOut = config.config.behavior.fadeOutDuration
         DispatchQueue.main.asyncAfter(deadline: .now() + fadeOut) { [weak self] in
-            guard let self else { return }
+            guard let self, !self.isActive else { return }
             self.text = ""
             self.animatedChars = []
             self.nextCharID = 0
@@ -257,7 +261,7 @@ class SubtitleViewModel: ObservableObject {
         }
     }
 
-    private func showTemporaryPill(text: String, timeout: TimeInterval) {
+    func showTemporaryPill(text: String, timeout: TimeInterval) {
         ensureActiveScreen()
         self.text = text
         onNewLine = false
@@ -270,9 +274,7 @@ class SubtitleViewModel: ObservableObject {
     }
 
     func showOnboarding() {
-        previousLine = "Hey! Press ⌘/ to enable Pubbles"
-        showPreviousLine = true
-        showTemporaryPill(text: "Check the menubar for more settings!", timeout: 10)
+        showTemporaryPill(text: "Hey! Press ⌘+/ to show a Pubble!", timeout: 3)
     }
 
     func handleCharacter(_ char: String) {

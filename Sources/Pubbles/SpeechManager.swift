@@ -126,6 +126,24 @@ class SpeechManager: @unchecked Sendable {
         return speech == .denied || speech == .restricted || mic == .denied || mic == .restricted
     }
 
+    /// Returns the System Settings URL for whichever denied permission to fix first.
+    static func deniedSettingsURL() -> URL {
+        let speech = SFSpeechRecognizer.authorizationStatus()
+        if speech == .denied || speech == .restricted {
+            return URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_SpeechRecognition")!
+        }
+        return URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Microphone")!
+    }
+
+    /// Returns a short label for whichever denied permission to show in the pill.
+    static func deniedPermissionLabel() -> String {
+        let speech = SFSpeechRecognizer.authorizationStatus()
+        if speech == .denied || speech == .restricted {
+            return "Speech Recognition"
+        }
+        return "Microphone"
+    }
+
     /// Requests mic + speech recognition permissions. Returns true only if both are granted.
     /// Uses Task.detached to avoid inheriting any actor isolation from the caller,
     /// which prevents Swift 6 runtime isolation checks from crashing when
