@@ -1,33 +1,22 @@
 import AppKit
 import SwiftUI
 
-// MARK: - Shared Accessibility Monitor
+// MARK: - Shared Permission Banner
 
-@MainActor
-class AccessibilityMonitor: ObservableObject {
-    static let shared = AccessibilityMonitor()
-    @Published private(set) var isGranted = AXIsProcessTrusted()
-
-    private init() {
-        Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
-            DispatchQueue.main.async { self?.isGranted = AXIsProcessTrusted() }
-        }
-    }
-}
-
-// MARK: - Shared Accessibility Banner
-
-struct AccessibilityBannerSection: View {
-    @ObservedObject private var monitor = AccessibilityMonitor.shared
+struct PermissionBannerSection<Buttons: View>: View {
+    let title: String
+    let description: String
+    let isGranted: Bool
+    @ViewBuilder let buttons: () -> Buttons
 
     var body: some View {
-        if !monitor.isGranted {
+        if !isGranted {
             Section {
                 VStack(alignment: .leading, spacing: 12) {
                     HStack(alignment: .top) {
                         VStack(alignment: .leading, spacing: 4) {
-                            Text("Please Enable Accessibility Permission")
-                            Text("Already showing as enabled? Quit the app, tap '−' on the Accessibility page to remove the permission, then re-open and re-grant.")
+                            Text(title)
+                            Text(description)
                                 .font(.callout)
                                 .foregroundStyle(.secondary)
                         }
@@ -35,18 +24,90 @@ struct AccessibilityBannerSection: View {
                         Image(systemName: "exclamationmark.triangle.fill")
                             .foregroundStyle(.orange)
                     }
-                    HStack(spacing: 8) {
-                        Button("Open Settings") {
-                            NSWorkspace.shared.open(
-                                URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-                            )
-                        }
-                        .buttonStyle(.borderedProminent)
-                        Button("Help") {
-                            NSWorkspace.shared.open(URL(string: "https://www.notion.so/Accessibility-Permission-error-3330f40884e9804aab43d81154577e79")!)
-                        }
-                    }
+                    HStack(spacing: 8) { buttons() }
                 }
+            }
+        }
+    }
+}
+
+// MARK: - Permission Monitor
+
+@MainActor
+class PermissionMonitor: ObservableObject {
+    static let accessibility = PermissionMonitor(check: AXIsProcessTrusted)
+    static let microphone = PermissionMonitor(
+        check: SpeechManager.currentPermissionsGranted,
+        denied: SpeechManager.permissionsPreviouslyDenied
+    )
+
+    @Published private(set) var isGranted: Bool
+    @Published private(set) var isDenied: Bool
+    private let check: () -> Bool
+    private let denied: () -> Bool
+    private var timer: Timer?
+
+    init(check: @escaping () -> Bool, denied: @escaping () -> Bool = { false }) {
+        self.check = check
+        self.denied = denied
+        isGranted = check()
+        isDenied = denied()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            DispatchQueue.main.async {
+                guard let self else { return }
+                self.isGranted = self.check()
+                self.isDenied = self.denied()
+                if self.isGranted { self.timer?.invalidate(); self.timer = nil }
+            }
+        }
+    }
+}
+
+// MARK: - Permission Banner Instances
+
+struct AccessibilityBannerSection: View {
+    @ObservedObject private var monitor = PermissionMonitor.accessibility
+
+    var body: some View {
+        PermissionBannerSection(
+            title: "Please Enable Accessibility Permission",
+            description: "Already showing as enabled? Quit the app, tap '−' on the Accessibility page to remove the permission, then re-open and re-grant.",
+            isGranted: monitor.isGranted
+        ) {
+            Button("Open Settings") {
+                NSWorkspace.shared.open(
+                    URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
+                )
+            }
+            .buttonStyle(.borderedProminent)
+            Button("Help") {
+                NSWorkspace.shared.open(URL(string: "https://www.notion.so/Accessibility-Permission-error-3330f40884e9804aab43d81154577e79")!)
+            }
+        }
+    }
+}
+
+struct MicrophoneBannerSection: View {
+    @ObservedObject private var monitor = PermissionMonitor.microphone
+
+    var body: some View {
+        PermissionBannerSection(
+            title: "Enable Microphone & Speech Recognition",
+            description: "Required for Babble mode. Pubbles uses native on-device speech recognition.",
+            isGranted: monitor.isGranted
+        ) {
+            if monitor.isDenied {
+                Button("Open Settings") {
+                    NSWorkspace.shared.open(
+                        SpeechManager.deniedSettingsURL()
+                    )
+                }
+                .buttonStyle(.borderedProminent)
+            } else {
+                Button("Grant Access") {
+                    Task { await SpeechManager.requestPermissions() }
+                }
+                .buttonStyle(.borderedProminent)
             }
         }
     }
