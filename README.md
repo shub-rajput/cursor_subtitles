@@ -58,7 +58,7 @@ open Pubbles.app
 
 ### Babble Mode
 
-Press **Cmd+B** (editable) to toggle babble mode — real-time speech-to-text that transcribes your voice into the pill using on-device speech recognition.
+Press **Cmd+M** (editable) to toggle babble mode — real-time speech-to-text that transcribes your voice into the pill using on-device speech recognition.
 
 - Works alongside typing — edit with the keyboard mid-dictation and speech picks up where you left off
 - In single-line mode, text auto-advances to a new line when the character limit is hit (with word-wrap so words don't split)
