@@ -34,10 +34,13 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                     if !SpeechManager.currentPermissionsGranted() {
                         Task { @MainActor in
                             let granted = await SpeechManager.requestPermissions()
+                            guard self.viewModel.dictationModeEnabled else { return }
                             if granted {
+                                if !self.viewModel.isActive { self.viewModel.activate() }
                                 self.speechManager.startListening()
                             } else {
                                 self.viewModel.dictationModeEnabled = false
+                                self.viewModel.showTemporaryPill(text: "Enable \(SpeechManager.deniedPermissionLabel()) Permission", timeout: 4)
                             }
                         }
                     } else {
