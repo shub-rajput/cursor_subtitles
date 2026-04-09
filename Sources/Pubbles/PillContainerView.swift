@@ -69,6 +69,16 @@ struct PillContainerView: View {
                     .allowsHitTesting(false)
             }
 
+            // Pinned pills (static, screen-filtered)
+            ForEach(viewModel.pinnedPills.filter { $0.screenID == screenID }) { pill in
+                PinnedPillView(pill: pill)
+                    .offset(
+                        x: pill.position.x + configManager.config.style.cursorOffset.x,
+                        y: pill.position.y + configManager.config.style.cursorOffset.y
+                    )
+                    .transition(.opacity)
+            }
+
             if viewModel.isVisible && isActiveScreen && !viewModel.pillHiddenForDrawing {
                 PillView(viewModel: viewModel)
                     .scaleEffect(springScale, anchor: .topLeading)
@@ -101,7 +111,133 @@ struct PillContainerView: View {
         )
     }
 
-    private var drawingGesture: some Gesture {
+}
+
+struct PinnedPillView: View {
+    let pill: PinnedPill
+    @ObservedObject private var configManager = ConfigManager.shared
+    @State private var appeared = false
+
+    private var style: StyleConfig { configManager.config.style }
+    private var scale: CGFloat { style.pillScale }
+    private var pinnedBorderColor: Color { Color(hex: style.pinnedBorderColor) ?? .white }
+
+    /// Backing shape for the sticker border — corner radii grow by borderWidth so the
+    /// expanded outline stays concentric with the pill rather than looking too sharp.
+    private var stickerShape: UnevenRoundedRectangle {
+        let pad = style.pinnedBorderWidth * scale
+        let r = style.cornerRadius * scale + pad
+        return UnevenRoundedRectangle(
+            topLeadingRadius: style.pointerCorner ? 2 * scale + pad : r,
+            bottomLeadingRadius: r,
+            bottomTrailingRadius: r,
+            topTrailingRadius: r,
+            style: .continuous
+        )
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            // Previous line (faded)
+            if pill.showPreviousLine && !pill.previousLine.isEmpty {
+                HStack(spacing: 0) {
+                    ForEach(pill.previousLineChars) { ac in
+                        Text(ac.character).font(style.textFont).foregroundStyle(style.txtColor.opacity(0.6))
+                    }
+                }
+                .padding(.horizontal, style.paddingH * scale)
+                .padding(.top, style.paddingV * scale)
+                .padding(.bottom, style.paddingV * scale / 2)
+            }
+
+            // Main text
+            Group {
+                if configManager.config.behavior.multiLine {
+                    CharFlowLayout(contentMaxWidth: (style.maxWidth - 2 * style.paddingH) * scale) {
+                        ForEach(pill.chars) { ac in
+                            if ac.character == "\n" {
+                                Color.clear.frame(width: 0, height: 0)
+                                    .layoutValue(key: LineBreakKey.self, value: true)
+                            } else {
+                                Text(ac.character)
+                                    .font(style.textFont)
+                                    .foregroundStyle(style.txtColor)
+                                    .layoutValue(key: IsWhitespaceKey.self, value: ac.character == " ")
+                            }
+                        }
+                    }
+                } else {
+                    HStack(spacing: 0) {
+                        ForEach(pill.chars) { ac in
+                            if ac.character != "\n" {
+                                Text(ac.character)
+                                    .font(style.textFont)
+                                    .foregroundStyle(style.txtColor)
+                            }
+                        }
+                    }
+                }
+            }
+            .padding(.horizontal, style.paddingH * scale)
+            .padding(.top, pill.showPreviousLine ? style.paddingV * scale / 2 : style.paddingV * scale)
+            .padding(.bottom, style.paddingV * scale)
+        }
+        .frame(maxWidth: style.maxWidth * scale, alignment: .leading)
+        .fixedSize()
+        .background {
+            if !style.glassEffect {
+                style.pillBackground
+            }
+        }
+        .clipShape(style.pillShape)
+        .modifier(GlassEffectModifier(
+            enabled: style.glassEffect,
+            tint: style.bgColor.opacity(style.backgroundOpacity),
+            shape: style.pillShape
+        ))
+        // Sticker look: colored outer border + drop shadow (behind the pill)
+        // Skipped when glass effect is active — the backing conflicts with the frosted look
+        .background(
+            Group {
+                if !style.glassEffect && style.pinnedBorderWidth > 0 {
+                    stickerShape
+                        .fill(pinnedBorderColor)
+                        .padding(-style.pinnedBorderWidth * scale)
+                        .shadow(color: .black.opacity(0.45), radius: 0, x: 1 * scale, y: 2 * scale)
+                }
+            }
+        )
+        // Pin badge at top-center
+        .overlay(alignment: .top) {
+            Image(systemName: "pin.fill")
+                .font(.system(size: style.pinIconSize * scale, weight: .heavy))
+                .foregroundColor(.black)
+                .rotationEffect(.degrees(45))
+                // 8-direction 0-blur shadows = stroke matching pinned border color
+                .shadow(color: pinnedBorderColor, radius: 0, x:  1, y:  0)
+                .shadow(color: pinnedBorderColor, radius: 0, x: -1, y:  0)
+                .shadow(color: pinnedBorderColor, radius: 0, x:  0, y:  1)
+                .shadow(color: pinnedBorderColor, radius: 0, x:  0, y: -1)
+                .shadow(color: pinnedBorderColor, radius: 0, x:  1, y:  1)
+                .shadow(color: pinnedBorderColor, radius: 0, x: -1, y: -1)
+                .shadow(color: pinnedBorderColor, radius: 0, x:  1, y: -1)
+                .shadow(color: pinnedBorderColor, radius: 0, x: -1, y:  1)
+                // drop shadow on top
+                .shadow(color: .black.opacity(0.4), radius: 2, x: 1, y: 2)
+            .scaleEffect(appeared ? 1 : 0.3)
+            .offset(y: -15)
+        }
+        .scaleEffect(appeared ? 1 : 0.9)
+        .onAppear {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.55)) {
+                appeared = true
+            }
+        }
+    }
+}
+
+private extension PillContainerView {
+    var drawingGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
                 let point = NSPoint(x: value.location.x, y: value.location.y)

@@ -10,53 +10,12 @@ struct PillView: View {
     private var style: StyleConfig { configManager.config.style }
     private var scale: CGFloat { style.pillScale }
 
-    private var bgColor: Color { Color(hex: style.backgroundColor) ?? .green }
-
-    private var swiftUIMaterial: Material {
-        switch style.vibrancy {
-        case "ultraThin": return .ultraThinMaterial
-        case "thin": return .thinMaterial
-        case "regular": return .regularMaterial
-        case "thick": return .thickMaterial
-        case "ultraThick": return .ultraThickMaterial
-        default: return .ultraThinMaterial
-        }
-    }
-
-    @ViewBuilder
-    private var pillBackground: some View {
-        if style.vibrancy != nil {
-            Rectangle().fill(swiftUIMaterial)
-                .overlay(bgColor.opacity(style.backgroundOpacity))
-        } else if let gradientColors = style.backgroundGradient,
-                  gradientColors.count >= 2 {
-            LinearGradient(
-                colors: gradientColors.compactMap { Color(hex: $0) },
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-            .opacity(style.backgroundOpacity)
-        } else {
-            bgColor.opacity(style.backgroundOpacity)
-        }
-    }
-    private var txtColor: Color { Color(hex: style.textColor) ?? .white }
-
-    private static let weightMap: [String: Font.Weight] = [
-        "ultraLight": .ultraLight, "thin": .thin, "light": .light,
-        "regular": .regular, "medium": .medium, "semibold": .semibold,
-        "bold": .bold, "heavy": .heavy, "black": .black,
-    ]
     private static let weightOrder: [Font.Weight] = [
         .ultraLight, .thin, .light, .regular, .medium, .semibold, .bold, .heavy, .black,
     ]
 
-    private var parsedWeight: Font.Weight {
-        Self.weightMap[style.fontWeight] ?? .medium
-    }
-
     private var cursorWeight: Font.Weight {
-        guard let idx = Self.weightOrder.firstIndex(of: parsedWeight), idx > 0 else {
+        guard let idx = Self.weightOrder.firstIndex(of: style.fontWeightValue), idx > 0 else {
             return .ultraLight
         }
         return Self.weightOrder[idx - 1]
@@ -64,39 +23,23 @@ struct PillView: View {
 
     private var scaledFontSize: CGFloat { style.fontSize * scale }
 
-    private var textFont: Font {
-        if style.fontFamily == "system" {
-            return .system(size: scaledFontSize, weight: parsedWeight)
-        }
-        return .custom(style.fontFamily, size: scaledFontSize)
-    }
     private var cursorFont: Font {
         if style.fontFamily == "system" {
             return .system(size: scaledFontSize, weight: cursorWeight)
         }
         return .custom(style.fontFamily, size: scaledFontSize)
     }
-    private var pillShape: UnevenRoundedRectangle {
-        let r = style.cornerRadius * scale
-        return UnevenRoundedRectangle(
-            topLeadingRadius: style.pointerCorner ? 2 * scale : r,
-            bottomLeadingRadius: r,
-            bottomTrailingRadius: r,
-            topTrailingRadius: r,
-            style: .continuous
-        )
-    }
 
     @ViewBuilder
     private var currentLineContent: some View {
         if viewModel.isPlaceholder {
             Text(viewModel.displayText)
-                .font(textFont)
-                .foregroundStyle(txtColor.opacity(0.7))
+                .font(style.textFont)
+                .foregroundStyle(style.txtColor.opacity(0.7))
         } else if viewModel.animatedChars.isEmpty && viewModel.text.isEmpty {
             Text(cursorVisible ? "|" : " ")
                 .font(cursorFont)
-                .foregroundStyle(txtColor)
+                .foregroundStyle(style.txtColor)
         } else if !viewModel.animatedChars.isEmpty {
             let editID = viewModel.editingCharID
             ForEach(viewModel.animatedChars) { ac in
@@ -105,8 +48,8 @@ struct PillView: View {
                         .layoutValue(key: LineBreakKey.self, value: true)
                 } else {
                     Text(ac.character)
-                        .font(textFont)
-                        .foregroundStyle(txtColor)
+                        .font(style.textFont)
+                        .foregroundStyle(style.txtColor)
                         .transition(CharTransition())
                         .anchorPreference(key: EditCursorAnchorKey.self, value: .leading) {
                             ac.id == editID ? $0 : nil
@@ -118,11 +61,11 @@ struct PillView: View {
             let isCursorChar = cursorVisible && viewModel.isActive && editID == nil
             Text(isCursorChar ? "|" : " ")
                 .font(cursorFont)
-                .foregroundStyle(txtColor)
+                .foregroundStyle(style.txtColor)
                 .layoutValue(key: IsWhitespaceKey.self, value: !isCursorChar)
         } else {
             // Fallback for non-animated text (hints, etc.)
-            Text(viewModel.text).font(textFont).foregroundStyle(txtColor) + Text(cursorVisible && viewModel.isActive ? "|" : " ").font(cursorFont).foregroundStyle(txtColor)
+            Text(viewModel.text).font(style.textFont).foregroundStyle(style.txtColor) + Text(cursorVisible && viewModel.isActive ? "|" : " ").font(cursorFont).foregroundStyle(style.txtColor)
         }
     }
 
@@ -134,13 +77,13 @@ struct PillView: View {
                     if !viewModel.previousLineChars.isEmpty {
                         ForEach(viewModel.previousLineChars) { ac in
                             Text(ac.character)
-                                .font(textFont)
-                                .foregroundStyle(txtColor.opacity(0.6))
+                                .font(style.textFont)
+                                .foregroundStyle(style.txtColor.opacity(0.6))
                         }
                     } else {
                         Text(viewModel.previousLine)
-                            .font(textFont)
-                            .foregroundStyle(txtColor.opacity(0.6))
+                            .font(style.textFont)
+                            .foregroundStyle(style.txtColor.opacity(0.6))
                     }
                 }
                 .padding(.horizontal, style.paddingH * scale)
@@ -170,7 +113,7 @@ struct PillView: View {
                         let pt = proxy[anchor]
                         Text(cursorVisible ? "|" : " ")
                             .font(cursorFont)
-                            .foregroundStyle(txtColor)
+                            .foregroundStyle(style.txtColor)
                             .fixedSize()
                             .position(x: pt.x, y: pt.y)
                     }
@@ -181,14 +124,14 @@ struct PillView: View {
         .fixedSize()
         .background {
             if !style.glassEffect {
-                pillBackground
+                style.pillBackground
             }
         }
-        .clipShape(pillShape)
+        .clipShape(style.pillShape)
         .modifier(GlassEffectModifier(
             enabled: style.glassEffect,
-            tint: bgColor.opacity(style.backgroundOpacity),
-            shape: pillShape
+            tint: style.bgColor.opacity(style.backgroundOpacity),
+            shape: style.pillShape
         ))
         .shadow(
             color: (Color(hex: style.shadowColor) ?? .black)
@@ -198,7 +141,7 @@ struct PillView: View {
             y: style.shadowY * scale
         )
         .overlay(
-            pillShape
+            style.pillShape
                 .strokeBorder(
                     (Color(hex: style.borderColor) ?? .white)
                         .opacity(style.borderOpacity),
@@ -210,15 +153,15 @@ struct PillView: View {
     }
 }
 
-private struct LineBreakKey: LayoutValueKey {
+struct LineBreakKey: LayoutValueKey {
     static let defaultValue: Bool = false
 }
 
-private struct IsWhitespaceKey: LayoutValueKey {
+struct IsWhitespaceKey: LayoutValueKey {
     static let defaultValue: Bool = false
 }
 
-private struct CharFlowLayout: Layout {
+struct CharFlowLayout: Layout {
     var contentMaxWidth: CGFloat
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
@@ -344,5 +287,67 @@ extension Color {
         let g = Double((hexNumber & 0x00FF00) >> 8) / 255
         let b = Double(hexNumber & 0x0000FF) / 255
         self.init(red: r, green: g, blue: b)
+    }
+}
+
+// MARK: - Shared pill style helpers
+// Used by both PillView and PinnedPillView to avoid duplication.
+
+extension StyleConfig {
+    static let weightMap: [String: Font.Weight] = [
+        "ultraLight": .ultraLight, "thin": .thin, "light": .light,
+        "regular": .regular, "medium": .medium, "semibold": .semibold,
+        "bold": .bold, "heavy": .heavy, "black": .black,
+    ]
+
+    var fontWeightValue: Font.Weight { Self.weightMap[fontWeight] ?? .medium }
+
+    var bgColor: Color { Color(hex: backgroundColor) ?? .green }
+    var txtColor: Color { Color(hex: textColor) ?? .white }
+
+    var swiftUIMaterial: Material {
+        switch vibrancy {
+        case "ultraThin": return .ultraThinMaterial
+        case "thin": return .thinMaterial
+        case "regular": return .regularMaterial
+        case "thick": return .thickMaterial
+        case "ultraThick": return .ultraThickMaterial
+        default: return .ultraThinMaterial
+        }
+    }
+
+    @ViewBuilder
+    var pillBackground: some View {
+        if vibrancy != nil {
+            Rectangle().fill(swiftUIMaterial)
+                .overlay(bgColor.opacity(backgroundOpacity))
+        } else if let gradientColors = backgroundGradient, gradientColors.count >= 2 {
+            LinearGradient(
+                colors: gradientColors.compactMap { Color(hex: $0) },
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+            .opacity(backgroundOpacity)
+        } else {
+            bgColor.opacity(backgroundOpacity)
+        }
+    }
+
+    var pillShape: UnevenRoundedRectangle {
+        let r = cornerRadius * pillScale
+        return UnevenRoundedRectangle(
+            topLeadingRadius: pointerCorner ? 2 * pillScale : r,
+            bottomLeadingRadius: r,
+            bottomTrailingRadius: r,
+            topTrailingRadius: r,
+            style: .continuous
+        )
+    }
+
+    var textFont: Font {
+        if fontFamily == "system" {
+            return .system(size: fontSize * pillScale, weight: fontWeightValue)
+        }
+        return .custom(fontFamily, size: fontSize * pillScale)
     }
 }
