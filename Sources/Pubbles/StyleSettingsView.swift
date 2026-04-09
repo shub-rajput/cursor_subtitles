@@ -185,6 +185,7 @@ struct StyleSettingsView: View {
             borderSection
             shadowSection
             drawingSection
+            pinnedBorderSection
         }
         .formStyle(.grouped)
     }
@@ -378,6 +379,33 @@ struct StyleSettingsView: View {
         }
     }
 
+    // MARK: - Pinned Border
+
+    private var pinnedBorderSection: some View {
+        Section {
+            HStack {
+                Text("Pinned Border Color")
+                Spacer()
+                ColorPicker("", selection: pinnedBorderColorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
+
+            Picker("Pinned Border Width", selection: pinnedBorderWidthPickerBinding) {
+                Text("None").tag(CGFloat(0))
+                ForEach([2, 3, 6, 8], id: \.self) { w in
+                    Text("\(w)px").tag(CGFloat(w))
+                }
+            }
+
+            Picker("Pin Icon Size", selection: pinIconSizePickerBinding) {
+                Text("None").tag(CGFloat(0))
+                Text("Small").tag(CGFloat(12))
+                Text("Medium").tag(CGFloat(14))
+                Text("Large").tag(CGFloat(20))
+            }
+        }
+    }
+
     // MARK: - Bindings
 
     private var bgColorWithOpacityBinding: Binding<Color> {
@@ -521,6 +549,27 @@ struct StyleSettingsView: View {
         Binding(
             get: { style.drawingLineWidth },
             set: { configManager.setStyleValue("drawingLineWidth", $0) }
+        )
+    }
+
+    private var pinnedBorderColorBinding: Binding<Color> {
+        Binding(
+            get: { Color(hex: style.pinnedBorderColor) ?? .white },
+            set: { configManager.setStyleValue("pinnedBorderColor", $0.toHex()) }
+        )
+    }
+
+    private var pinnedBorderWidthPickerBinding: Binding<CGFloat> {
+        Binding(
+            get: { style.pinnedBorderWidth },
+            set: { configManager.setStyleValue("pinnedBorderWidth", $0) }
+        )
+    }
+
+    private var pinIconSizePickerBinding: Binding<CGFloat> {
+        Binding(
+            get: { style.pinIconSize },
+            set: { configManager.setStyleValue("pinIconSize", $0) }
         )
     }
 }

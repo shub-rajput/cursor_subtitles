@@ -9,6 +9,7 @@ struct HotkeysSettingsView: View {
         case drawingMode
         case drawingToggle
         case dictationToggle
+        case pinMode
     }
 
     var body: some View {
@@ -63,6 +64,34 @@ struct HotkeysSettingsView: View {
                         recordButton { recordingRow = .drawingMode }
                         if !configManager.config.drawingHotkey.isEmpty {
                             clearButton { configManager.setDrawingHotkey("") }
+                        }
+                    }
+                }
+
+                // Pin Pubble
+                HStack {
+                    Text("Pin Pubble")
+                    Spacer()
+
+                    if recordingRow == .pinMode {
+                        HotkeyRecorderInline(
+                            modifierOnly: true,
+                            onRecord: { newHotkey in
+                                configManager.setPinHotkey(newHotkey)
+                                recordingRow = nil
+                            },
+                            onCancel: { recordingRow = nil }
+                        )
+                    } else {
+                        HStack(spacing: 6) {
+                            hotkeyKeyCaps(configManager.config.pinHotkey)
+                            Text("+ Right Click")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        recordButton { recordingRow = .pinMode }
+                        if !configManager.config.pinHotkey.isEmpty {
+                            clearButton { configManager.setPinHotkey("") }
                         }
                     }
                 }

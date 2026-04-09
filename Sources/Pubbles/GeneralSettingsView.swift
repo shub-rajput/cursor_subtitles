@@ -24,11 +24,16 @@ struct GeneralSettingsView: View {
 
             Section {
                 Picker("Idle Timeout", selection: idleTimeoutBinding) {
+                    Text("Never").tag(0.0)
                     ForEach([3.0, 5.0, 10.0, 20.0], id: \.self) { s in
                         Text("\(Int(s))s").tag(s)
                     }
                 }
 
+                Toggle("Click to Dismiss", isOn: clickToDismissBinding)
+            }
+
+            Section {
                 Picker("Fade In", selection: fadeInBinding) {
                     ForEach([0.0, 0.1, 0.2, 0.3, 0.5], id: \.self) { s in
                         Text(s == 0 ? "Instant" : "\(s, specifier: "%.1f")s").tag(s)
@@ -97,6 +102,13 @@ struct GeneralSettingsView: View {
         Binding(
             get: { behavior.multiLine },
             set: { configManager.setBehaviorValue("multiLine", $0) }
+        )
+    }
+
+    private var clickToDismissBinding: Binding<Bool> {
+        Binding(
+            get: { behavior.clickToDismiss },
+            set: { configManager.setBehaviorValue("clickToDismiss", $0) }
         )
     }
 
