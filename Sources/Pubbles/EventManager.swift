@@ -118,25 +118,26 @@ final class EventManager {
 
         // Mouse click — dismiss pill (drawing is handled by overlay window gesture)
         if type == .leftMouseDown || type == .rightMouseDown {
-            let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
-            let drawingEnabled = MainActor.assumeIsolated { self.viewModel.drawingModeEnabled }
+            let (isActive, drawingEnabled, clickToDismiss, pinHotkeyStr, pinMods) = MainActor.assumeIsolated {
+                let h = ConfigManager.shared.config.pinHotkey
+                return (
+                    self.viewModel.isActive,
+                    self.viewModel.drawingModeEnabled,
+                    ConfigManager.shared.config.behavior.clickToDismiss,
+                    h,
+                    Self.parseHotkey(h).0
+                )
+            }
 
             // When drawing mode is on, overlay window handles left clicks — don't dismiss
-            if type == .leftMouseDown && isActive && !drawingEnabled {
-                let clickToDismiss = MainActor.assumeIsolated { ConfigManager.shared.config.behavior.clickToDismiss }
-                if clickToDismiss {
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated { self.viewModel.dismiss() }
-                    }
+            if type == .leftMouseDown && isActive && !drawingEnabled && clickToDismiss {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { self.viewModel.dismiss() }
                 }
             }
 
             // Right click: modifier+right-click pins; plain right-click dismisses
             if type == .rightMouseDown && isActive {
-                let (pinHotkeyStr, pinMods) = MainActor.assumeIsolated {
-                    let h = ConfigManager.shared.config.pinHotkey
-                    return (h, Self.parseHotkey(h).0)
-                }
                 let modifierHeld = !pinHotkeyStr.isEmpty && event.flags.contains(pinMods.cgEventFlags)
 
                 if modifierHeld {
@@ -144,12 +145,9 @@ final class EventManager {
                         MainActor.assumeIsolated { self.viewModel.pinCurrentPill() }
                     }
                     return nil // consume so the right-click menu doesn't appear
-                } else {
-                    let clickToDismiss = MainActor.assumeIsolated { ConfigManager.shared.config.behavior.clickToDismiss }
-                    if clickToDismiss {
-                        DispatchQueue.main.async {
-                            MainActor.assumeIsolated { self.viewModel.dismiss() }
-                        }
+                } else if clickToDismiss {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.dismiss() }
                     }
                 }
             }

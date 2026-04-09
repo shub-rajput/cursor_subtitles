@@ -9,7 +9,6 @@ struct AnimatedChar: Identifiable, Equatable {
 
 struct PinnedPill: Identifiable {
     let id = UUID()
-    let text: String
     let chars: [AnimatedChar]
     let position: NSPoint
     let screenID: ObjectIdentifier
@@ -184,7 +183,6 @@ class SubtitleViewModel: ObservableObject {
         guard isActive, !text.isEmpty else { return }
         guard let screenID = activeScreenID else { return }
         let pinned = PinnedPill(
-            text: text,
             chars: animatedChars,
             position: cursorPosition,
             screenID: screenID,
@@ -192,6 +190,7 @@ class SubtitleViewModel: ObservableObject {
             previousLineChars: previousLineChars,
             showPreviousLine: showPreviousLine
         )
+        if pinnedPills.count >= 50 { pinnedPills.removeFirst() }
         pinnedPills.append(pinned)
         let sessionLength = lastDictationFullTextLength
         activate()
