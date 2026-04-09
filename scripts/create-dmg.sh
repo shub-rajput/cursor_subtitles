@@ -60,6 +60,8 @@ tell application "Finder"
         set background picture of theViewOptions to file ".background:bg.png"
         set position of item "${APP_NAME}.app" of container window to {140, 200}
         set position of item "Applications" of container window to {420, 200}
+        set position of item ".background" of container window to {140, 600}
+        set position of item ".fseventsd" of container window to {280, 600}
         close
     end tell
 end tell
