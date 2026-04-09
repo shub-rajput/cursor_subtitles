@@ -7,6 +7,17 @@ struct AnimatedChar: Identifiable, Equatable {
     let character: String
 }
 
+struct PinnedPill: Identifiable {
+    let id = UUID()
+    let text: String
+    let chars: [AnimatedChar]
+    let position: NSPoint
+    let screenID: ObjectIdentifier
+    let previousLine: String
+    let previousLineChars: [AnimatedChar]
+    let showPreviousLine: Bool
+}
+
 @MainActor
 class SubtitleViewModel: ObservableObject {
     @Published var text: String = ""
@@ -30,6 +41,8 @@ class SubtitleViewModel: ObservableObject {
     /// Not @Published — updated at ~60Hz during drag; Canvas reads it via TimelineView to avoid PillView redraws
     var currentStroke: [NSPoint] = []
     @Published var isDrawing: Bool = false
+
+    @Published var pinnedPills: [PinnedPill] = []
 
     @Published var dictationModeEnabled: Bool = false
     private var dictationBaseline: String = ""
@@ -67,6 +80,7 @@ class SubtitleViewModel: ObservableObject {
         idleTimer?.invalidate()
         isVisible = true
         let timeout = config.config.behavior.idleTimeout
+        guard timeout > 0 else { return }
         idleTimer = Timer.scheduledTimer(withTimeInterval: timeout, repeats: false) { [weak self] _ in
             DispatchQueue.main.async {
                 self?.dismiss()
@@ -166,6 +180,27 @@ class SubtitleViewModel: ObservableObject {
         }
     }
 
+    func pinCurrentPill() {
+        guard isActive, !text.isEmpty else { return }
+        guard let screenID = activeScreenID else { return }
+        let pinned = PinnedPill(
+            text: text,
+            chars: animatedChars,
+            position: cursorPosition,
+            screenID: screenID,
+            previousLine: previousLine,
+            previousLineChars: previousLineChars,
+            showPreviousLine: showPreviousLine
+        )
+        pinnedPills.append(pinned)
+        let sessionLength = lastDictationFullTextLength
+        activate()
+        // Reset dictation baseline so new pill starts fresh, but keep session offset
+        // so already-recognised speech isn't replayed into the new pill
+        dictationBaseline = ""
+        dictationSessionOffset = sessionLength
+    }
+
     func handleDictationResult(fullText: String, isFinal: Bool) {
         guard isActive else { return }
         if !isVisible { isVisible = true }
@@ -223,6 +258,13 @@ class SubtitleViewModel: ObservableObject {
             dictationBaseline = text
             dictationSessionOffset = 0
         }
+    }
+
+    func dismissAll() {
+        withAnimation(.easeOut(duration: 0.3)) {
+            pinnedPills = []
+        }
+        dismiss()
     }
 
     func dismiss() {

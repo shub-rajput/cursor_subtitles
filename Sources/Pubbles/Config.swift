@@ -34,6 +34,9 @@ struct StyleConfig: Codable, Sendable, Equatable {
     var drawingLineColor: String = "#FF0000"
     var drawingLineWidth: CGFloat = 3
     var pillScale: CGFloat = 1.0
+    var pinnedBorderWidth: CGFloat = 3
+    var pinnedBorderColor: String = "#FFFFFF"
+    var pinIconSize: CGFloat = 14
 }
 
 struct BehaviorConfig: Codable, Sendable {
@@ -42,6 +45,7 @@ struct BehaviorConfig: Codable, Sendable {
     var fadeInDuration: Double = 0.2
     var charLimit: Int = 30
     var multiLine: Bool = false
+    var clickToDismiss: Bool = false
 }
 
 struct AppConfig: Codable, Sendable {
@@ -49,6 +53,7 @@ struct AppConfig: Codable, Sendable {
     var drawingHotkey: String = "cmd"
     var drawingToggleHotkey: String = "cmd+d"
     var dictationHotkey: String = "cmd+m"
+    var pinHotkey: String = "cmd"
     var theme: String? = nil
     var style: StyleConfig = StyleConfig()
     var behavior: BehaviorConfig = BehaviorConfig()
@@ -442,6 +447,12 @@ class ConfigManager: ObservableObject {
     func setDictationHotkey(_ hotkey: String) {
         guard var dict = readConfigDict() else { return }
         dict["dictationHotkey"] = hotkey
+        writeConfigDict(dict)
+    }
+
+    func setPinHotkey(_ hotkey: String) {
+        guard var dict = readConfigDict() else { return }
+        dict["pinHotkey"] = hotkey
         writeConfigDict(dict)
     }
 
