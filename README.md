@@ -66,6 +66,17 @@ Press **Cmd+M** (editable) to toggle babble mode — real-time speech-to-text th
 - Requires **Microphone** and **Speech Recognition** permissions (prompted on first use, or grant via Settings)
 - If permissions were previously denied, the pill shows a message directing you to System Settings
 
+### Pin Mode
+
+**Hold Cmd and right-click** (modifier configurable) to pin the current pill to the screen. Pinned pills:
+
+- Stay in place with a pin badge at the top while the active pill continues normally
+- Show a distinct border (white by default) so they're easy to tell apart
+- Are cleared all at once with **Escape** (when the active pill is not open)
+- Up to 50 pins can be on screen at a time
+
+Customize via config: `pinHotkey` (modifier key, default: `cmd`), `style.pinnedBorderColor`, `style.pinnedBorderWidth`, `style.pinIconColor`, `style.pinIconSize`.
+
 ### Doodle Mode
 
 Press **Cmd+D** (editable) to toggle doodle mode — no need for the pill to be active first. When enabled:
@@ -97,6 +108,7 @@ While the pill is active:
 | **Cmd+Down** | Next theme |
 | **Cmd+Right** | Scale pill up |
 | **Cmd+Left** | Scale pill down |
+| **Hold Cmd + right-click** | Pin current pill to screen |
 | **Hold Cmd + click+drag** | Draw on screen (in doodle mode) |
 | **Escape** | Dismiss pill |
 | **Enter** | New line |
@@ -204,6 +216,7 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `drawingToggleHotkey` — dedicated doodle mode toggle (default: `cmd+d`)
 - `dictationHotkey` — babble mode toggle (default: `cmd+m`)
 - `theme` — theme name matching a file in `~/.config/pubbles/themes/` (default: none)
+- `pinHotkey` — modifier key for hold-to-pin (default: `cmd`)
 
 **Style** (`style.*`):
 - `backgroundColor` — pill color, hex (default: `#1F6BE8`)
@@ -234,6 +247,10 @@ To override a theme's style, add specific keys under `style` or `behavior`:
 - `shadowY` — shadow vertical offset (default: `5`)
 - `drawingLineColor` — drawing stroke color, hex (default: `#FF0000`)
 - `drawingLineWidth` — drawing stroke width (default: `3`)
+- `pinnedBorderColor` — border color of pinned pills, hex (default: `#FFFFFF`)
+- `pinnedBorderWidth` — border width of pinned pills (default: `3`)
+- `pinIconColor` — color of the pin badge icon (default: `#000000`)
+- `pinIconSize` — size of the pin badge icon (default: `14`)
 
 **Behavior** (`behavior.*`):
 - `idleTimeout` — seconds before fade (default: `10`)
