@@ -123,15 +123,34 @@ final class EventManager {
 
             // When drawing mode is on, overlay window handles left clicks — don't dismiss
             if type == .leftMouseDown && isActive && !drawingEnabled {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { self.viewModel.dismiss() }
+                let clickToDismiss = MainActor.assumeIsolated { ConfigManager.shared.config.behavior.clickToDismiss }
+                if clickToDismiss {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.dismiss() }
+                    }
                 }
             }
 
-            // Right click always dismisses
+            // Right click: modifier+right-click pins; plain right-click dismisses
             if type == .rightMouseDown && isActive {
-                DispatchQueue.main.async {
-                    MainActor.assumeIsolated { self.viewModel.dismiss() }
+                let (pinHotkeyStr, pinMods) = MainActor.assumeIsolated {
+                    let h = ConfigManager.shared.config.pinHotkey
+                    return (h, Self.parseHotkey(h).0)
+                }
+                let modifierHeld = !pinHotkeyStr.isEmpty && event.flags.contains(pinMods.cgEventFlags)
+
+                if modifierHeld {
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated { self.viewModel.pinCurrentPill() }
+                    }
+                    return nil // consume so the right-click menu doesn't appear
+                } else {
+                    let clickToDismiss = MainActor.assumeIsolated { ConfigManager.shared.config.behavior.clickToDismiss }
+                    if clickToDismiss {
+                        DispatchQueue.main.async {
+                            MainActor.assumeIsolated { self.viewModel.dismiss() }
+                        }
+                    }
                 }
             }
 
@@ -223,9 +242,18 @@ final class EventManager {
             return Unmanaged.passUnretained(event)
         }
 
-        // When pill not active, pass through
+        // When pill not active, pass through — except Esc when pinned pills exist
         let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
-        guard isActive else { return Unmanaged.passUnretained(event) }
+        if !isActive {
+            let hasPinned = MainActor.assumeIsolated { !self.viewModel.pinnedPills.isEmpty }
+            if hasPinned && nsEvent.keyCode == 53 {
+                DispatchQueue.main.async {
+                    MainActor.assumeIsolated { self.viewModel.dismissAll() }
+                }
+                return nil
+            }
+            return Unmanaged.passUnretained(event)
+        }
 
         // Pass through any modifier combos — user's own shortcuts (Raycast, Alfred, app shortcuts, etc.)
         // ⌘+arrows are already handled above before this point, everything else passes through.
@@ -251,7 +279,7 @@ final class EventManager {
         // Escape
         if keyCode == 53 {
             DispatchQueue.main.async {
-                MainActor.assumeIsolated { self.viewModel.dismiss() }
+                MainActor.assumeIsolated { self.viewModel.dismissAll() }
             }
             return nil
         }
