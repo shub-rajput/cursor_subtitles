@@ -37,6 +37,7 @@ struct StyleConfig: Codable, Sendable, Equatable {
     var pinnedBorderWidth: CGFloat = 3
     var pinnedBorderColor: String = "#FFFFFF"
     var pinIconSize: CGFloat = 14
+    var pinIconColor: String = "#000000"
 }
 
 struct BehaviorConfig: Codable, Sendable {

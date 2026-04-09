@@ -403,6 +403,13 @@ struct StyleSettingsView: View {
                 Text("Medium").tag(CGFloat(14))
                 Text("Large").tag(CGFloat(20))
             }
+
+            HStack {
+                Text("Pin Icon Color")
+                Spacer()
+                ColorPicker("", selection: pinIconColorBinding, supportsOpacity: false)
+                    .labelsHidden()
+            }
         }
     }
 
@@ -570,6 +577,13 @@ struct StyleSettingsView: View {
         Binding(
             get: { style.pinIconSize },
             set: { configManager.setStyleValue("pinIconSize", $0) }
+        )
+    }
+
+    private var pinIconColorBinding: Binding<Color> {
+        Binding(
+            get: { Color(hex: style.pinIconColor) ?? .black },
+            set: { configManager.setStyleValue("pinIconColor", $0.toHex()) }
         )
     }
 }

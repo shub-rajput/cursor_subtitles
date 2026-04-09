@@ -113,7 +113,7 @@ struct PillContainerView: View {
 
 }
 
-struct PinnedPillView: View {
+private struct PinnedPillView: View {
     let pill: PinnedPill
     @ObservedObject private var configManager = ConfigManager.shared
     @State private var appeared = false
@@ -137,12 +137,14 @@ struct PinnedPillView: View {
     }
 
     var body: some View {
+        let textFont = style.textFont
+        let txtColor = style.txtColor
         VStack(alignment: .leading, spacing: 0) {
             // Previous line (faded)
             if pill.showPreviousLine && !pill.previousLine.isEmpty {
                 HStack(spacing: 0) {
                     ForEach(pill.previousLineChars) { ac in
-                        Text(ac.character).font(style.textFont).foregroundStyle(style.txtColor.opacity(0.6))
+                        Text(ac.character).font(textFont).foregroundStyle(txtColor.opacity(0.6))
                     }
                 }
                 .padding(.horizontal, style.paddingH * scale)
@@ -160,8 +162,8 @@ struct PinnedPillView: View {
                                     .layoutValue(key: LineBreakKey.self, value: true)
                             } else {
                                 Text(ac.character)
-                                    .font(style.textFont)
-                                    .foregroundStyle(style.txtColor)
+                                    .font(textFont)
+                                    .foregroundStyle(txtColor)
                                     .layoutValue(key: IsWhitespaceKey.self, value: ac.character == " ")
                             }
                         }
@@ -171,8 +173,8 @@ struct PinnedPillView: View {
                         ForEach(pill.chars) { ac in
                             if ac.character != "\n" {
                                 Text(ac.character)
-                                    .font(style.textFont)
-                                    .foregroundStyle(style.txtColor)
+                                    .font(textFont)
+                                    .foregroundStyle(txtColor)
                             }
                         }
                     }
@@ -211,7 +213,7 @@ struct PinnedPillView: View {
         .overlay(alignment: .top) {
             Image(systemName: "pin.fill")
                 .font(.system(size: style.pinIconSize * scale, weight: .heavy))
-                .foregroundColor(.black)
+                .foregroundColor(Color(hex: style.pinIconColor) ?? .black)
                 .rotationEffect(.degrees(45))
                 // 8-direction 0-blur shadows = stroke matching pinned border color
                 .shadow(color: pinnedBorderColor, radius: 0, x:  1, y:  0)
