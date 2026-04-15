@@ -213,29 +213,33 @@ final class EventManager {
             return nil
         }
 
-        // Cmd+arrow shortcuts (only when pill is active)
-        let cmdArrowActions: [UInt16: @MainActor () -> Void] = [
-            125: { ConfigManager.shared.cycleTheme(forward: true) },   // Cmd+Down
-            126: { ConfigManager.shared.cycleTheme(forward: false) },  // Cmd+Up
-            124: { ConfigManager.shared.adjustPillScale(increase: true) },  // Cmd+Right
-            123: { ConfigManager.shared.adjustPillScale(increase: false) }, // Cmd+Left
-        ]
-        if mods.contains(.command), let action = cmdArrowActions[keyCode] {
+        // Cmd shortcuts (only when pill is active)
+        if mods.contains(.command) {
             let isActive = MainActor.assumeIsolated { self.viewModel.isActive }
             if isActive {
-                // Theme cycle hotkeys (Cmd+Up/Down) are blocked when there are unsaved changes
-                if keyCode == 125 || keyCode == 126 {
-                    DispatchQueue.main.async {
-                        MainActor.assumeIsolated {
-                            if !ConfigManager.shared.isDirty {
-                                action()
+                if keyCode == 51 { // Cmd+Delete → clear all text
+                    DispatchQueue.main.async { MainActor.assumeIsolated { self.viewModel.handleClearAll() } }
+                    return nil
+                }
+                let cmdArrowActions: [UInt16: @MainActor () -> Void] = [
+                    125: { ConfigManager.shared.cycleTheme(forward: true) },   // Cmd+Down
+                    126: { ConfigManager.shared.cycleTheme(forward: false) },  // Cmd+Up
+                    124: { ConfigManager.shared.adjustPillScale(increase: true) },  // Cmd+Right
+                    123: { ConfigManager.shared.adjustPillScale(increase: false) }, // Cmd+Left
+                ]
+                if let action = cmdArrowActions[keyCode] {
+                    // Theme cycle hotkeys (Cmd+Up/Down) are blocked when there are unsaved changes
+                    if keyCode == 125 || keyCode == 126 {
+                        DispatchQueue.main.async {
+                            MainActor.assumeIsolated {
+                                if !ConfigManager.shared.isDirty { action() }
                             }
                         }
+                    } else {
+                        DispatchQueue.main.async { MainActor.assumeIsolated { action() } }
                     }
-                } else {
-                    DispatchQueue.main.async { MainActor.assumeIsolated { action() } }
+                    return nil
                 }
-                return nil
             }
             return Unmanaged.passUnretained(event)
         }
@@ -254,8 +258,7 @@ final class EventManager {
         }
 
         // Pass through any modifier combos — user's own shortcuts (Raycast, Alfred, app shortcuts, etc.)
-        // ⌘+arrows are already handled above before this point, everything else passes through.
-        let actionMods: NSEvent.ModifierFlags = [.command, .option, .control]
+        let actionMods: NSEvent.ModifierFlags = [.option, .control]
         if !mods.intersection(actionMods).isEmpty {
             return Unmanaged.passUnretained(event)
         }

@@ -448,6 +448,16 @@ class SubtitleViewModel: ObservableObject {
         resetIdleTimer()
     }
 
+    func handleClearAll() {
+        guard isActive else { return }
+        text = ""
+        animatedChars = []
+        nextCharID = 0
+        textCursorIndex = 0
+        syncDictationBaselineIfNeeded()
+        resetIdleTimer()
+    }
+
     /// When the user edits text via keyboard during dictation, sync the baseline
     /// so the next speech result appends to the edited text instead of overwriting it.
     private func syncDictationBaselineIfNeeded() {

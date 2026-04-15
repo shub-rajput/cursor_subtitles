@@ -163,6 +163,16 @@ struct HotkeysSettingsView: View {
                     }
                 }
 
+                hotkeyRow("Clear Text") {
+                    HStack(spacing: 4) {
+                        KeyCap("cmd")
+                        Text("+")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        KeyCap("⌫")
+                    }
+                }
+
                 hotkeyRow("Dismiss") {
                     KeyCap("Esc")
                 }
