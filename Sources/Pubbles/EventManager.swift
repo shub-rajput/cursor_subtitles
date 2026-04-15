@@ -276,6 +276,14 @@ final class EventManager {
             }
             return nil
         }
+        if keyCode == 126 { // Up arrow
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.viewModel.handleMoveLineUp() } }
+            return nil
+        }
+        if keyCode == 125 { // Down arrow
+            DispatchQueue.main.async { MainActor.assumeIsolated { self.viewModel.handleMoveLineDown() } }
+            return nil
+        }
 
         // Escape
         if keyCode == 53 {

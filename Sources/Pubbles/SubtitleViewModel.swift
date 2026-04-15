@@ -448,6 +448,59 @@ class SubtitleViewModel: ObservableObject {
         resetIdleTimer()
     }
 
+    func handleMoveLineUp() {
+        guard isActive else { return }
+        guard config.config.behavior.multiLine else {
+            textCursorIndex = 0; resetIdleTimer(); return
+        }
+        let currentIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
+        var lineStart = text.startIndex
+        var s = currentIdx
+        while s > text.startIndex {
+            let prev = text.index(before: s)
+            if text[prev] == "\n" { lineStart = s; break }
+            s = prev
+        }
+        if lineStart == text.startIndex { textCursorIndex = 0; resetIdleTimer(); return }
+        let column = text.distance(from: lineStart, to: currentIdx)
+        let prevNewline = text.index(before: lineStart)
+        var prevLineStart = text.startIndex
+        var s2 = prevNewline
+        while s2 > text.startIndex {
+            let prev = text.index(before: s2)
+            if text[prev] == "\n" { prevLineStart = s2; break }
+            s2 = prev
+        }
+        let prevLineLength = text.distance(from: prevLineStart, to: prevNewline)
+        textCursorIndex = text.distance(from: text.startIndex, to: text.index(prevLineStart, offsetBy: min(column, prevLineLength)))
+        resetIdleTimer()
+    }
+
+    func handleMoveLineDown() {
+        guard isActive else { return }
+        guard config.config.behavior.multiLine else {
+            textCursorIndex = text.count; resetIdleTimer(); return
+        }
+        let currentIdx = text.index(text.startIndex, offsetBy: textCursorIndex)
+        var lineStart = text.startIndex
+        var s = currentIdx
+        while s > text.startIndex {
+            let prev = text.index(before: s)
+            if text[prev] == "\n" { lineStart = s; break }
+            s = prev
+        }
+        let column = text.distance(from: lineStart, to: currentIdx)
+        var lineEnd = currentIdx
+        while lineEnd < text.endIndex && text[lineEnd] != "\n" { lineEnd = text.index(after: lineEnd) }
+        if lineEnd >= text.endIndex { textCursorIndex = text.count; resetIdleTimer(); return }
+        let nextLineStart = text.index(after: lineEnd)
+        var nextLineEnd = nextLineStart
+        while nextLineEnd < text.endIndex && text[nextLineEnd] != "\n" { nextLineEnd = text.index(after: nextLineEnd) }
+        let nextLineLength = text.distance(from: nextLineStart, to: nextLineEnd)
+        textCursorIndex = text.distance(from: text.startIndex, to: text.index(nextLineStart, offsetBy: min(column, nextLineLength)))
+        resetIdleTimer()
+    }
+
     func handleClearAll() {
         guard isActive else { return }
         text = ""
