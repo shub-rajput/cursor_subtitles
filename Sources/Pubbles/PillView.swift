@@ -44,8 +44,11 @@ struct PillView: View {
             let editID = viewModel.editingCharID
             ForEach(viewModel.animatedChars) { ac in
                 if ac.character == "\n" {
-                    Color.clear.frame(width: 0, height: 0)
+                    Color.clear.frame(width: 0, height: scaledFontSize)
                         .layoutValue(key: LineBreakKey.self, value: true)
+                        .anchorPreference(key: EditCursorAnchorKey.self, value: .center) {
+                            ac.id == editID ? $0 : nil
+                        }
                 } else {
                     Text(ac.character)
                         .font(style.textFont)
